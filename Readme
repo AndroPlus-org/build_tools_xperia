@@ -1,0 +1,24 @@
+F2FS対応
+
+init.target.rc編集
+    start fsckwait
+
+    # Generate proper fstab
+    exec /sbin/genfstab.rhine
+
+    mount_all fstab.qcom
+    
+    
+genfstab.rhineを/sbinにコピー
+fstab.qcomを削除
+
+
+
+Permissive
+init.rc編集、最後に追加
+
+# Force SELinux into permissive mode
+service sepermit /system/bin/setenforce 0
+    class main
+    user root
+    oneshot
