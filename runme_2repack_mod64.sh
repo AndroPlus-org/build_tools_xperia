@@ -12,16 +12,22 @@ chmod 777 work/kernel.sin-ramdisk/sbin/start_mpdec.sh
 #chmod 777 work/kernel.sin-ramdisk/sbin/set_options.sh
 
 # Copy rootsh and SuperSU
-cp tools/rootsh work/kernel.sin-ramdisk/sbin/rootsh
-sudo chmod a+x work/kernel.sin-ramdisk/sbin
-sudo chown root work/kernel.sin-ramdisk/sbin/rootsh
-sudo chgrp 2000 work/kernel.sin-ramdisk/sbin/rootsh
-sudo chmod 6750 work/kernel.sin-ramdisk/sbin/rootsh
+#cp -a tools/SuperSU_files work/kernel.sin-ramdisk/SuperSU_files
+#cp tools/rootsh work/kernel.sin-ramdisk/sbin/rootsh
+#sudo chmod a+x work/kernel.sin-ramdisk/sbin
+#sudo chown root work/kernel.sin-ramdisk/sbin/rootsh
+#sudo chgrp 2000 work/kernel.sin-ramdisk/sbin/rootsh
+#sudo chmod 6750 work/kernel.sin-ramdisk/sbin/rootsh
 
-cp -a tools/SuperSU_files work/kernel.sin-ramdisk/SuperSU_files
+# Copy bootrec files
+cp -a tools/twrp-sony-recovery-boot-script/bootrec work/kernel.sin-ramdisk/bootrec
 
 # Go to ramdisk dir
 cd work/kernel.sin-ramdisk
+
+# Hijack init
+mv init init.real
+ln -s /bootrec/init.sh init
 
 # Changes for generating proper fstab
 #rm -f fstab.qcom
@@ -32,6 +38,9 @@ sed -i -e "s@write /sys/fs/selinux/checkreqprot 0@#write /sys/fs/selinux/checkre
 sed -i -e "s@mount rootfs rootfs / ro remount@mount rootfs rootfs / rw,suid remount\n    chmod 0755 /sbin\n    chown root system /sbin/rootsh\n    chmod 6755 /sbin/rootsh\n    chgrp 2000 sbin/rootsh\n@g" init.rc
 sed -i -e "s@chmod 0444 /sys/fs/selinux/policy@#chmod 0444 /sys/fs/selinux/policy@g" init.rc
 sed -i -e "s/setprop selinux\.reload_policy 1/#setprop selinux\.reload_policy 1/g" init.rc
+
+sed -i -e "s@/system/xbin/su		u:object_r:su_exec:s0@#/system/xbin/su		u:object_r:su_exec:s0@g" file_contexts
+sed -i -e "s@/system/bin/patchoat    u:object_r:dex2oat_exec:s0@/system/bin/patchoat    u:object_r:dex2oat_exec:s0\n\n#############################\n# SuperSU, init.d files and busybox\n#\n\n/sbin/su		u:object_r:system_file:s0\n\n/system/etc/install-recovery.sh	u:object_r:toolbox_exec:s0 \n/system/xbin/su		u:object_r:system_file:s0\n/system/bin/.ext/.su	u:object_r:system_file:s0\n/system/xbin/daemonsu	u:object_r:system_file:s0\n/system/xbin/sugote	u:object_r:zygote_exec:s0\n/system/xbin/supolicy	u:object_r:system_file:s0\n/system/lib64/libsupol.so	u:object_r:system_file:s0\n/system/xbin/sugote-mksh	u:object_r:system_file:s0\n/system/bin/app_process64_original	u:object_r:zygote_exec:s0\n/system/bin/app_process_init	u:object_r:system_file:s0\n/system/etc/.installed_su_daemon	u:object_r:system_file:s0\n/system/su.d(/*.)	u:object_r:system_file:s0\n\n/system/xbin/busybox	u:object_r:system_file:s0\n@g" file_contexts
 
 # Enable insecure adb
 sed -i -e "s/persist\.sys\.usb\.config=mtp/persist\.sys\.usb\.config=mtp,adb/g" default.prop
@@ -48,20 +57,11 @@ sed -i -e "s/ro\.debuggable=0/ro\.debuggable=1/g" default.prop
 echo -e "\nservice androplus_script /sbin/start_mpdec.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.sony.rc
 
 # Support init.d
-echo -e "\nservice initd_support /sbin/busybox run-parts /system/etc/init.d\n    class main\n    oneshot" >> init.sony.rc
-#echo -e "\non property:sys.boot_completed=1\n# Enable and configure intelli thermal\nwrite /sys/module/msm_thermal_v2/parameters/enabled Y\nwrite /sys/module/msm_thermal_v2/core_control/enabled 1 \nwrite /sys/module/msm_thermal_v2/parameters/core_limit_temp_degC 65\nwrite /sys/module/msm_thermal_v2/parameters/limit_temp_degC 70\nwrite /sys/module/msm_thermal_v2/parameters/poll_ms 250\nwrite /sys/module/msm_thermal_v2/vdd_restriction/enabled 0\nwrite /sys/module/msm_thermal_v2/parameters/core_control_mask 12\nwrite /sys/module/msm_thermal_v2/parameters/freq_control_mask 15\n\n# Enable intelli_plug\nwrite /sys/kernel/intelli_plug/intelli_plug_active 1" >> init.sony.rc
+echo -e "\nservice initd_support /system/bin/logwrapper /sbin/busybox run-parts /system/etc/init.d\n    class main\n    oneshot" >> init.rc
 
 # Tweak
 #sed -i -e "s/sdcard -u 1023 -g 1023 -w 1023 -d/sdcard -u 1023 -g 1023 -w 1023 -t 4 -d/g" init.qcom.rc
 #sed -i -e "s/on boot/on boot\n    # read ahead buffer\n    write \/sys\/block\/mmcblk0\/queue\/read_ahead_kb 2048\n    write \/sys\/block\/mmcblk1\/queue\/read_ahead_kb 2048/g" init.qcom.rc
-
-# Quick Charge 2.0
-#sed -i -e 's/on boot/on boot\n# Quick Charge 2.0 daemon\n    setprop persist.usb.hvdcp.detect \"true\"\n/g' init.qcom.rc
-#sed -i -e "/service hvdcp \/system\/bin\/hvdcp/,/disabled/ s/user root/user root\n    group root/g" init.qcom.rc
-#sed -i -e "s&#on property:persist.usb.hvdcp.detect=true&on property:persist.usb.hvdcp.detect=true&g" init.qcom.rc
-#sed -i -e "s/#    start hvdcp/    start hvdcp/g" init.qcom.rc
-#sed -i -e "s/#on property:persist.usb.hvdcp.detect=false/on property:persist.usb.hvdcp.detect=false/g" init.qcom.rc
-#sed -i -e "s/#    stop hvdcp/    stop hvdcp/g" init.qcom.rc
 
 # Disable sony_ric
 sed -i -e "s/mount securityfs securityfs \/sys\/kernel\/security nosuid nodev noexec/# mount securityfs securityfs \/sys\/kernel\/security nosuid nodev noexec/g" init.sony-platform.rc
@@ -88,6 +88,8 @@ sed -i -e "s/group tad root/group root root/g" init.sony-platform.rc
 
 #chmod 750 init
 
+crashtag=`cat crashtag`
+devicename=`echo ${crashtag} | sed "s/.*-\([a-zA-Z0-9]*\).*/\1/"`
 
 # Compress ramdisk
-find ./* | sudo cpio -o -H newc | sudo gzip -9 > ../../ramdiskP.cpio.gz
+find ./* | sudo cpio -o -H newc | sudo gzip -9 > ../../ramdisk$devicename.cpio.gz
