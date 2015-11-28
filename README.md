@@ -8,8 +8,8 @@ Xperia Z3シリーズ (shinano) までの場合
 
 Xperia Z4リーズ (kitakami) 以降の場合  
 1. Flashtoolなどでkernel.sinをextractし、kernel.elfをこのディレクトリにコピー  
-2. runme_1unpack.shを実行 (ramdiskの中身を編集したければwork/kernel.sin-ramdiskディレクトリで編集する)  
-3. runme_2repack_mod.shを実行  
+2. runme_1unpack64.shを実行 (ramdiskの中身を編集したければwork/kernel.sin-ramdiskディレクトリで編集する)  
+3. runme_2repack_mod64.shを実行  
 
 ## F2FS対応
 1. init.target.rcの編集
