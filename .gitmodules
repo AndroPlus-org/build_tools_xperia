@@ -1,0 +1,3 @@
+[submodule "twrp-sony-recovery-boot-script"]
+	path = tools/twrp-sony-recovery-boot-script
+	url = https://github.com/jackfagner/twrp-sony-recovery-boot-script.git
