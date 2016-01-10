@@ -1,3 +1,5 @@
+git clone --recursive https://github.com/AndroPlus-org/build_tools_xperia.git  
+
 Xperiaのカーネルをビルドするために必要な、ramdiskを作るためのツールです。  
 runme_2repack_mod.shで色々編集しているので適宜変えてください。  
 
