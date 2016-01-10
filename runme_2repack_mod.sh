@@ -38,10 +38,10 @@ sed -i -e "s/ro\.debuggable=0/ro\.debuggable=1\npersist.adb.notify=0/g" default.
 #echo -e "\nservice androplus_script /sbin/stop_mpdec.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.sony.rc
 
 # Create init.d dir
-echo -e "\nservice androplus_script /sbin/start_mpdec.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.sony.rc
+echo -e "\nservice androplus_script /sbin/start_mpdec.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.rc
 
 # Support init.d
-echo -e "\nservice initd_support /system/bin/logwrapper /sbin/busybox run-parts /system/etc/init.d\n    class main\n    oneshot" >> init.rc
+echo -e "\nservice initd_support /system/bin/logwrapper /sbin/busybox run-parts /system/etc/init.d\n    class main\n    user root\n    group root\n    oneshot" >> init.rc
 #echo -e "\non property:sys.boot_completed=1\n# Enable and configure intelli thermal\nwrite /sys/module/msm_thermal_v2/parameters/enabled Y\nwrite /sys/module/msm_thermal_v2/core_control/enabled 1 \nwrite /sys/module/msm_thermal_v2/parameters/core_limit_temp_degC 65\nwrite /sys/module/msm_thermal_v2/parameters/limit_temp_degC 70\nwrite /sys/module/msm_thermal_v2/parameters/poll_ms 250\nwrite /sys/module/msm_thermal_v2/vdd_restriction/enabled 0\nwrite /sys/module/msm_thermal_v2/parameters/core_control_mask 12\nwrite /sys/module/msm_thermal_v2/parameters/freq_control_mask 15\n\n# Enable intelli_plug\nwrite /sys/kernel/intelli_plug/intelli_plug_active 1" >> init.sony.rc
 
 # Tweak

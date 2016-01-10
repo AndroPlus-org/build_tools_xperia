@@ -11,6 +11,10 @@ chmod 777 work/kernel.sin-ramdisk/sbin/start_mpdec.sh
 #cp tools/set_options.sh work/kernel.sin-ramdisk/sbin/set_options.sh
 #chmod 777 work/kernel.sin-ramdisk/sbin/set_options.sh
 
+# Copy busybox
+cp tools/busybox work/kernel.sin-ramdisk/sbin/busybox
+chmod 777 work/kernel.sin-ramdisk/sbin/busybox
+
 # Copy rootsh and SuperSU
 #cp -a tools/SuperSU_files work/kernel.sin-ramdisk/SuperSU_files
 #cp tools/rootsh work/kernel.sin-ramdisk/sbin/rootsh
@@ -54,7 +58,7 @@ sed -i -e "s/ro\.debuggable=0/ro\.debuggable=1/g" default.prop
 #echo -e "\nservice androplus_script /sbin/stop_mpdec.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.sony.rc
 
 # Create init.d dir
-echo -e "\nservice androplus_script /sbin/start_mpdec.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.sony.rc
+echo -e "\nservice androplus_script /sbin/start_mpdec.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.rc
 
 # Support init.d
 echo -e "\nservice initd_support /system/bin/logwrapper /sbin/busybox run-parts /system/etc/init.d\n    class main\n    oneshot" >> init.rc
