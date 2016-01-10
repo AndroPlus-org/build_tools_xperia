@@ -18,6 +18,11 @@ cd work/kernel.sin-ramdisk
 #rm -f fstab.qcom
 #sed -i -e "s/start fsckwait/start fsckwait\n\n    # Generate proper fstab\n    exec \/sbin\/genfstab\.rhine/g" init.target.rc
 
+# Change fstab to support other fs
+#sed -i -e "s/\/system      ext4/\/system      auto/g" fstab.qcom
+#sed -i -e "s/\/data        ext4/\/data        auto/g" fstab.qcom
+#sed -i -e "s/\/cache       ext4/\/cache       auto/g" fstab.qcom
+
 # Do not reload policy
 # sed -i -e "s/setprop selinux\.reload_policy 1/setprop selinux\.reload_policy 0/g" init.rc
 
