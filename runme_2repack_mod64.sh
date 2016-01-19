@@ -15,6 +15,10 @@ chmod 777 work/kernel.sin-ramdisk/sbin/start_mpdec.sh
 cp tools/busybox work/kernel.sin-ramdisk/sbin/busybox
 chmod 777 work/kernel.sin-ramdisk/sbin/busybox
 
+# Copy lib-cred-inject.so
+cp tools/lib-cred-inject.so work/kernel.sin-ramdisk/lib/lib-cred-inject.so
+chmod 644 work/kernel.sin-ramdisk/lib/lib-cred-inject.so
+
 # Copy rootsh and SuperSU
 #cp -a tools/SuperSU_files work/kernel.sin-ramdisk/SuperSU_files
 #cp tools/rootsh work/kernel.sin-ramdisk/sbin/rootsh
@@ -55,13 +59,13 @@ sed -i -e "s/ro\.debuggable=0/ro\.debuggable=1/g" default.prop
 #sed -i -e "s/camera2\.portability\.force_api=1/camera2\.portability\.force_api=2/g" default.prop
 
 # Disable MP decision
-#echo -e "\nservice androplus_script /sbin/stop_mpdec.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.sony.rc
+#echo "\nservice androplus_script /sbin/stop_mpdec.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.sony.rc
 
 # Create init.d dir
-echo -e "\nservice androplus_script /sbin/start_mpdec.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.rc
+echo "\nservice androplus_script /sbin/start_mpdec.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.rc
 
 # Support init.d
-echo -e "\nservice initd_support /system/bin/logwrapper /sbin/busybox run-parts /system/etc/init.d\n    class main\n    oneshot" >> init.rc
+echo "\nservice initd_support /system/bin/logwrapper /sbin/busybox run-parts /system/etc/init.d\n    class main\n    oneshot" >> init.rc
 
 # Tweak
 #sed -i -e "s/sdcard -u 1023 -g 1023 -w 1023 -d/sdcard -u 1023 -g 1023 -w 1023 -t 4 -d/g" init.qcom.rc
@@ -70,6 +74,11 @@ echo -e "\nservice initd_support /system/bin/logwrapper /sbin/busybox run-parts 
 # Disable sony_ric
 sed -i -e "s/mount securityfs securityfs \/sys\/kernel\/security nosuid nodev noexec/# mount securityfs securityfs \/sys\/kernel\/security nosuid nodev noexec/g" init.sony-platform.rc
 sed -i -e "s/service ric \/sbin\/ric/service ric \/sbin\/ric\n    disabled/g" init.sony-platform.rc
+
+# Restore DRM functions
+sed -i -e 's@on post-fs-data@on post-fs-data\n    exec /system/xbin/supolicy --live "allow secd rootfs file execute"@g' init.sony.rc
+sed -i -e "s@service secd /system/bin/secd@service secd /system/bin/secd\n    setenv LD_PRELOAD /lib/lib-cred-inject.so@g" init.sony.rc
+sed -i -e "s@service keyprovd /system/bin/keyprovd@service keyprovd /system/bin/keyprovd\n    setenv LD_PRELOAD /lib/lib-cred-inject.so@g" init.sony-device-common.rc
 
 # Fix qmux
 #sed -i -e "s/\/dev\/smdcntl7             0640   radio      radio/\/dev\/smdcntl7             0640   radio      radio\n\/dev\/smdcntl8             0640   radio      radio\n\/dev\/smdcntl9             0640   radio      radio\n\/dev\/smdcntl10            0640   radio      radio\n\/dev\/smdcntl11            0640   radio      radio/g" ueventd.qcom.rc
