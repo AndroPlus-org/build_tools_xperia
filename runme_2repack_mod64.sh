@@ -16,6 +16,7 @@ cp tools/busybox work/kernel.sin-ramdisk/sbin/busybox
 chmod 777 work/kernel.sin-ramdisk/sbin/busybox
 
 # Copy lib-cred-inject.so
+mkdir -p work/kernel.sin-ramdisk/lib
 cp tools/lib-cred-inject.so work/kernel.sin-ramdisk/lib/lib-cred-inject.so
 chmod 644 work/kernel.sin-ramdisk/lib/lib-cred-inject.so
 
