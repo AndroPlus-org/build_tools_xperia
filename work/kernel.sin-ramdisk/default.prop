@@ -1,0 +1,22 @@
+#
+# ADDITIONAL_DEFAULT_PROPERTIES
+#
+persist.sys.usb.config=mtp
+ro.sys.umsdirtyratio=5
+drm.service.enabled=true
+ro.secure=0
+ro.allow.mock.location=0
+ro.debuggable=1
+ro.zygote=zygote64_32
+dalvik.vm.dex2oat-Xms=64m
+dalvik.vm.dex2oat-Xmx=512m
+dalvik.vm.image-dex2oat-Xms=64m
+dalvik.vm.image-dex2oat-Xmx=64m
+ro.dalvik.vm.native.bridge=0
+#
+# VERSION_PROPERTIES
+#
+ro.semc.version.sw=1296-0248
+ro.semc.version.sw_revision=28.0.A.8.260
+ro.semc.version.sw_variant=JAPAN-WIFI32G
+ro.semc.version.sw_type=user

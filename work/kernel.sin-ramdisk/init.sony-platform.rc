@@ -1,0 +1,446 @@
+# Copyright (c) 2014 Sony Mobile Communications Inc.
+#
+# init.sony-platform.rc
+#
+
+on early-init
+    
+
+on init
+    # SONY: Start the TrimArea Daemon. It must be started before fota-ua
+    chown root root /dev/block/mmcblk0p1
+    chmod 0777 /dev/block/mmcblk0p1
+    class_start trimarea
+    exec /sbin/wait4tad_static
+
+    # SONY: checkabortedflash should be started as early as possible.
+    # Dependant on the TrimArea Daemon.
+    exec /sbin/checkabortedflash
+
+    # SONY: check if device is first boot up during startup service
+    exec /sbin/checkfirstboot
+
+    # SONY: mr and wipddata need to be started before mount_all
+    exec /sbin/mr
+    exec /sbin/wipedata
+
+    # Enable ramdumps from subsystems to dump
+    # venus ssr
+    write /sys/bus/msm_subsys/devices/subsys0/restart_level "RELATED"
+    # adsp ssr
+    write /sys/bus/msm_subsys/devices/subsys1/restart_level "RELATED"
+    # modem ssr
+    write /sys/bus/msm_subsys/devices/subsys2/restart_level "RELATED"
+    
+    # bcm_wlan ssr
+    write /sys/module/bcm_wlan_ramdump/parameters/enable_ssr_dump 1
+
+    # Set coredump mode to 1(debug)
+    
+
+on fs
+    insmod /system/lib/modules/kscl.ko
+
+    insmod /system/lib/modules/ecryptfs.ko
+
+    # mount LTA-Label here as from Kitakami the mount path is changed.
+    mkdir /lta-label 0555 system system
+    wait /dev/block/bootdevice/by-name/LTALabel
+    mount ext4 /dev/block/bootdevice/by-name/LTALabel /lta-label nosuid nodev noatime noexec ro barrier=0 context=u:object_r:lta_label:s0
+    chown system system /lta-label
+    chmod 0555 /lta-label
+
+    # mount oem
+    wait /dev/block/bootdevice/by-name/oem
+    mount ext4 /dev/block/bootdevice/by-name/oem /oem ro barrier=1
+
+    # mount diag
+    mkdir /mnt/idd 0751 idd idd
+    wait /dev/block/bootdevice/by-name/diag
+    mount ext4 /dev/block/bootdevice/by-name/diag /mnt/idd nosuid nodev noatime noexec barrier=0 discard
+    chown idd idd /mnt/idd
+    chmod 0751 /mnt/idd
+    exec /system/bin/rm -r /mnt/idd/lost+found
+
+    # mount apps_log
+    mkdir /mnt/rca 0750 idd idd
+    wait /dev/block/bootdevice/by-name/apps_log
+    mount ext4 /dev/block/bootdevice/by-name/apps_log /mnt/rca nosuid nodev noatime noexec barrier=0 discard
+    chown idd idd /mnt/rca
+    chmod 0750 /mnt/rca
+    exec /system/bin/rm -r /mnt/rca/lost+found
+
+    # SONY: Fota must be started after partitions are mounted
+    exec /sbin/fota-ua c
+
+    # Bluetooth address setting
+    setprop ro.bt.bdaddr_path "/data/etc/bluetooth_bdaddr"
+    chown bluetooth net_bt_admin ro.bt.bdaddr_path
+
+    #Enable Bluetooth HFP 1.6
+    setprop ro.bluetooth.hfp.ver 1.6
+
+    #Disable Bluetooth A2DP SNK
+    setprop bluetooth.a2dp.sink.enabled false
+
+on post-fs
+    # MHL driver. To support MHL power off charge,
+    # the insmod must be done before chargemon.
+    insmod /system/lib/modules/mhl_sii8620_8061_drv.ko
+    chown system system /sys/devices/virtual/mhl/ga/connected_ver
+    chown system system /sys/devices/virtual/mhl/ga/connected_cable
+    chown system system /sys/devices/virtual/mhl/ga/monitor_name
+    chown system system /sys/devices/virtual/mhl/ga/manufacturer_name
+
+    # for MHL Thermal
+    chown system system /sys/devices/virtual/mhl/thermal/forced_stop
+    chmod 0220 /sys/devices/virtual/mhl/thermal/forced_stop
+
+    # Display color correction is needed in charge only mode as well.
+    start display_cc
+
+    # create directory for scd
+    mkdir /dev/socket/scd 0755 system system
+    mkdir /data/scd 0755 system system
+
+    chmod 0440 /sys/class/power_supply/bms/battery_type
+    
+    exec /system/bin/chargemon
+
+    # led RGB
+    chown system system /sys/class/leds/rgb/sync_state
+    chown system system /sys/class/leds/rgb/start_blink
+    chown system system /sys/class/leds/led:rgb_red/brightness
+    chown system system /sys/class/leds/led:rgb_red/lut_pwm
+    chown system system /sys/class/leds/led:rgb_red/step_duration
+    chown system system /sys/class/leds/led:rgb_red/pause_lo_multi
+    chown system system /sys/class/leds/led:rgb_red/pause_hi_multi
+    chown system system /sys/class/leds/led:rgb_green/brightness
+    chown system system /sys/class/leds/led:rgb_green/lut_pwm
+    chown system system /sys/class/leds/led:rgb_green/step_duration
+    chown system system /sys/class/leds/led:rgb_green/pause_lo_multi
+    chown system system /sys/class/leds/led:rgb_green/pause_hi_multi
+    chown system system /sys/class/leds/led:rgb_blue/brightness
+    chown system system /sys/class/leds/led:rgb_blue/lut_pwm
+    chown system system /sys/class/leds/led:rgb_blue/step_duration
+    chown system system /sys/class/leds/led:rgb_blue/pause_lo_multi
+    chown system system /sys/class/leds/led:rgb_blue/pause_hi_multi
+    # panel ID
+    chown system system /sys/devices/mdss_dsi_panel/panel_id
+    chmod 0440 /sys/devices/mdss_dsi_panel/panel_id
+
+on post-fs-data
+    # SONY: Start early TA-users
+    mkdir /data/etc 0755 root shell
+    exec /system/bin/taimport
+
+    # SONY: Create a dir on data partition not to be deleted during mr and wipedata
+    mkdir /data/persist 0770 persist_rw persist_rw
+
+    # SONY: Camera
+    chown media camera /sys/devices/sony_camera_0/info
+    chmod 0770 /sys/devices/sony_camera_0/info
+    chown media camera /sys/devices/sony_camera_1/info
+    chmod 0770 /sys/devices/sony_camera_1/info
+
+    # SONY: Create directory for partial dump
+    mkdir /data/crashdata 0770 root system
+
+    # SONY: Allow javadumper to access dropbox
+    mkdir /data/system/dropbox system system
+    chmod 0750 /data/system/dropbox
+
+    # SONY: Create directory for private tombstones (incl. parent directories)
+    mkdir /data/tombstones 0755 system system
+    mkdir /data/tombstones/vendor 0775 system system
+    chmod 0775 /data/tombstones/vendor
+    mkdir /data/tombstones/vendor/private 0750 system system
+
+    # Restore the security context for dump directories
+    
+    exec /system/bin/restorecon -RF /data/crashdata/
+
+    exec /system/bin/restorecon -RF /mnt/idd/crashdata/
+    exec /system/bin/post_dumper -m
+    rmdir /mnt/idd/crashdata
+
+    # SONY: fast-dormancy
+    mkdir /data/fastdormancy 0770 fastdormancy system
+
+    # SONY: Create a dir for apfd script files
+    mkdir /data/system/apfd 0770 system system
+
+    # Create directory for sfs
+    mkdir /data/sfs 0700 system system
+
+    # SONY: Import MiscTA to System properties
+    exec /system/bin/taimport property
+
+    # taimport ready, use this as trigger for multi-cdf-symlinker
+    setprop init.taimport.ready true
+
+    # Create directory for hdcp-sdk
+    
+
+    # create directory for ric data
+    
+
+
+on early-boot
+    start ta_qmi_service
+    start sct_service
+    start mlog_qmi_service
+
+    # Init selinux trap module (except for production build)
+    # exec /system/bin/sh /system/etc/init.selinux_trap.sh
+
+    
+
+on boot
+    # Change reset behavior to warm reset
+    
+
+    # SONY: Enable Sony RIC
+    # mount securityfs securityfs /sys/kernel/security nosuid nodev noexec
+
+    # native dumper via corepattern
+    write /proc/sys/kernel/core_pattern "|/system/bin/nativedumper -c %p %e %s %t"
+
+    # SONY: Change modem wdog bite behavior to system crash
+    
+
+    # SONY: Change adsp wdog bite behavior to system crash
+    
+
+    # SONY: Enable wakeup irq module
+    write /sys/devices/platform/wakeup_debug.0/enable 1
+
+    # Setting to use rndis_qc driver
+    exec /system/bin/sh /init.usbmode.platform.sh "set_rndis_qc"
+
+    # for USB HOST
+    chown system system /sys/module/qpnp_smbcharger_extension/parameters/id_polling_timeout
+    chown system system /sys/module/qpnp_smbcharger_extension/parameters/start_id_polling
+    chmod 0660 /sys/module/qpnp_smbcharger_extension/parameters/id_polling_timeout
+    chmod 0660 /sys/module/qpnp_smbcharger_extension/parameters/start_id_polling
+
+    write /sys/module/qpnp_smbcharger_extension/parameters/id_polling_timeout 30000
+    write /sys/module/qpnp_smbcharger_extension/parameters/start_id_polling 1
+
+on property:vold.decrypt=trigger_restart_framework
+    start display_cc
+
+
+
+on property:gsm.nitz.time=*
+    start scdnotifier_nitz
+
+on property:sys.somc.traffic_control=*
+    start traffic_control
+
+
+
+# Fast Dormancy
+on property:ro.semc.enable.fast_dormancy=false
+    stop fast-dormancy
+
+# display color calibration
+service display_cc /system/bin/display_color_calib
+    class main
+    user system
+    group system
+    oneshot
+    disabled
+
+# SONY: TrimArea Daemon
+# Last 2 args: start block(blk size 128k), number of blocks(partitionsize(kb)/128(kb))
+service tad_static /sbin/tad_static /dev/block/bootdevice/by-name/TA 0,16
+    user root
+    group root root
+    socket tad stream 0660 system trimarea
+    class trimarea
+# tad_static is in rootfs, normal file_context does not work
+    seclabel u:r:tad:s0
+
+service updatemiscta /system/bin/updatemiscta
+    class main
+    user updatemiscta
+    group trimarea
+    oneshot
+
+# Trim Area QMI service
+service ta_qmi_service /system/bin/ta_qmi_service
+    user root
+    disabled
+
+# Secure Config Transfer service
+service sct_service /system/bin/sct_service
+    user root
+    disabled
+
+service illumination /system/bin/illumination_service
+    socket illumination stream 0660 system system
+    class main
+    user system
+    group system
+
+on property:init.svc.surfaceflinger=stopped
+    stop illumination
+
+on property:init.svc.surfaceflinger=running
+    start illumination
+
+
+
+# Modem Log QMI service
+service mlog_qmi_service /system/bin/mlog_qmi_service
+    user root
+    disabled
+
+service ssr_dumper /system/bin/ssr_dumper
+    class main
+    user root
+    group root system
+
+service javadumper /system/bin/javadumper
+    class main
+    user root
+    group root system
+
+service tombstonedumper /system/bin/tombstonedumper
+    class main
+    user root
+    group root system shell
+
+service dhcpcd_eth0 /system/bin/dhcpcd -B -d -t 30
+    class late_start
+    disabled
+    oneshot
+
+service scd /system/bin/scd
+    class late_start
+    user system
+    group system
+
+service scdnotifier_nitz /system/bin/scdnotifier nitz
+    class main
+    user system
+    group system
+    oneshot
+    disabled
+
+# Config file updater
+service ota-updater /system/bin/ota-config-updater.sh
+    class main
+    user system
+    group system
+    disabled
+    oneshot
+
+# All services that use qseecomd daemon listeners should
+# start on sys.listeners.registered property to make sure that
+# all of its service listeners are registered before calling them
+on property:sys.listeners.registered=true
+    start wvkbd_installer
+
+service wvkbd_installer /system/bin/wvkbd
+    user system
+    group system
+    oneshot
+    disabled
+
+# set up symbolic links to proper configuration file
+service config-linker /system/bin/multi-cdf-symlinker.sh
+    class main
+    user system
+    group system
+    disabled
+    oneshot
+
+# Note! that there is a dependency towards taimport property
+# the property is set immediatly after execution of taimport.
+on property:init.taimport.ready=true
+    mkdir /data/customization 0755 system system
+    mkdir /data/customization/ota-config 0755 system system
+    restorecon /data/customization
+    start config-linker
+
+# Start RIC
+service ric /sbin/ric
+    disabled
+    user root
+    group root drmrpc trimarea system
+    class main
+    seclabel u:r:ric:s0
+
+# Native daemon for PacketFilter
+service apfd /system/bin/apfd
+    class main
+    socket apfd_socket stream 0660 root system
+    group system
+
+# traffic_control
+service traffic_control /system/bin/sh /system/etc/traffic_control.sh
+    user root
+    group root
+    class main
+    oneshot
+    disabled
+
+
+
+
+
+# Fast Dormancy
+service fast-dormancy /system/bin/fast-dormancy
+    user fastdormancy
+    group fastdormancy system inet net_raw net_admin qcom_diag radio wifi
+    socket fastdorm stream 0660 system system
+    class main
+
+# Native helper for SuperStamina
+service xssm /system/bin/xssm
+    class main
+    user root
+    group root system shell
+    socket xssm stream 0660 root system
+    socket prmd stream 0666 root system
+    socket xssm_wakelock_socket stream 0660 root system
+
+# Native helper for PrepaidSupport
+service firewall-proxy /system/bin/firewall-proxy
+    class main
+    user root
+    group root system
+    socket telcel stream 0660 root system
+
+# DCI_Logger
+
+
+
+
+# Native service for in-house WFD sink
+service wfd_sink_service /system/bin/wfd_sink_service
+    user system
+    group inet net_admin audio wifi media_rw
+    disabled
+    oneshot
+
+# gts_config
+service gts_config /system/bin/sh /system/etc/gts_config.sh
+    disabled
+    oneshot
+
+on property:sys.somc.gts.config=*
+    start gts_config
+
+# tpm-service
+# Allows other system application to use tpm from java
+service tpm-service /system/bin/tpm-service
+    class late_start
+    user tpm-service
+    group system tpm-service trimarea drmrpc
+
+
+
+import init.sony.rc

@@ -1,0 +1,15 @@
+# Copyright (c) 2014 Sony Mobile Communications Inc.
+#
+# product specific configuration
+#
+import init.sony-device-common.rc
+
+on fs
+    wait /dev/block/platform/f9824900.sdhci/by-name/B2B
+    mkdir /tmpCUSTOMB2BDir 0755 root root
+    mount ext4 /dev/block/platform/f9824900.sdhci/by-name/B2B /tmpCUSTOMB2BDir nodev noatime nodiratime
+    restorecon /tmpCUSTOMB2BDir
+    exec /system/xbin/b2b_cust_backup
+    mkdir /b2b 0755 root root
+    mount ext4 /dev/block/platform/f9824900.sdhci/by-name/B2B /b2b nosuid nodev noatime noexec ro barrier=1 context=u:object_r:b2bfs:s0
+    exec /system/xbin/b2b_chkmount

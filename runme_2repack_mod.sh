@@ -5,8 +5,8 @@
 #chmod 777 work/kernel.sin-ramdisk/sbin/genfstab.rhine
 
 # Copy script for init.d dir
-cp tools/start_mpdec.sh work/kernel.sin-ramdisk/sbin/start_mpdec.sh
-chmod 777 work/kernel.sin-ramdisk/sbin/start_mpdec.sh
+cp tools/androplus.sh work/kernel.sin-ramdisk/sbin/androplus.sh
+chmod 777 work/kernel.sin-ramdisk/sbin/androplus.sh
 
 #cp tools/set_options.sh work/kernel.sin-ramdisk/sbin/set_options.sh
 #chmod 777 work/kernel.sin-ramdisk/sbin/set_options.sh
@@ -37,8 +37,8 @@ sed -i -e "s/ro\.debuggable=0/ro\.debuggable=1\npersist.adb.notify=0/g" default.
 # Disable MP decision
 #echo "\nservice androplus_script /sbin/stop_mpdec.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.sony.rc
 
-# Create init.d dir
-echo "\nservice androplus_script /sbin/start_mpdec.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.rc
+# Run script
+echo "\nservice androplus_script /sbin/androplus.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.rc
 
 # Support init.d
 echo "\nservice initd_support /system/bin/logwrapper /sbin/busybox run-parts /system/etc/init.d\n    class main\n    user root\n    group root\n    oneshot" >> init.rc

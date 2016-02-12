@@ -1,0 +1,72 @@
+# Copyright (c) 2014 Sony Mobile Communications Inc.
+#
+# product common configuration
+#
+import init.sony-platform.rc
+
+on post-fs
+    # Touch
+    mkdir /dev/socket/tfsw 0770 system system
+
+on post-fs-data
+    # Enterprise API configuration
+    setprop ro.support.irda 0
+
+on boot
+   # Touch filter
+    chown system system /system/etc/tfswinfo/default.tfswinfo
+    chmod 0600          /system/etc/tfswinfo/default.tfswinfo
+
+service kobjeventd /system/bin/kobjeventd
+    user system
+    group system
+    class core
+
+# Touch
+on property:sys.screen_on=0
+    write /sys/devices/virtual/input/maxim_sti/screen_status 0
+
+on property:sys.screen_on=1
+    write /sys/devices/virtual/input/maxim_sti/screen_status 1
+
+on property:persist.sys.touch.easywakeup=0
+    write /sys/devices/virtual/input/maxim_sti/gesture_wakeup 0
+
+on property:persist.sys.touch.easywakeup=1
+    write /sys/devices/virtual/input/maxim_sti/gesture_wakeup 1
+
+on property:init.svc.illumination=running
+    start touchscreend
+
+on property:init.svc.illumination=stopped
+    stop touchscreend
+
+on property:sys.charger_plugged=0
+    write /sys/devices/virtual/input/maxim_sti/charger_mode 0
+
+on property:sys.charger_plugged=1
+    write /sys/devices/virtual/input/maxim_sti/charger_mode 1
+
+on property:sys.lcd_fpks=*
+   write /sys/devices/virtual/input/maxim_sti/lcd_fpks ${sys.lcd_fpks}
+
+service touchscreend /system/bin/touchscreend
+    disabled
+    user system
+    group system
+    class core
+
+#Backlight
+on post-fs
+    chown system system /sys/class/leds/lp8557/bl_scale
+
+# charger
+on property:persist.service.battery.charge=0
+    write /sys/class/power_supply/battery/enable_llk 0
+    write /sys/class/power_supply/battery/llk_socmax 0
+    write /sys/class/power_supply/battery/llk_socmin 0
+
+on property:persist.service.battery.charge=1
+    write /sys/class/power_supply/battery/enable_llk 1
+    write /sys/class/power_supply/battery/llk_socmax 60
+    write /sys/class/power_supply/battery/llk_socmin 40

@@ -1,0 +1,119 @@
+#line 1 "external/sepolicy/property_contexts"
+##########################
+# property service keys
+#
+#
+net.rmnet               u:object_r:net_radio_prop:s0
+net.gprs                u:object_r:net_radio_prop:s0
+net.ppp                 u:object_r:net_radio_prop:s0
+net.qmi                 u:object_r:net_radio_prop:s0
+net.lte                 u:object_r:net_radio_prop:s0
+net.cdma                u:object_r:net_radio_prop:s0
+net.dns                 u:object_r:net_radio_prop:s0
+sys.usb.config          u:object_r:system_radio_prop:s0
+ril.                    u:object_r:radio_prop:s0
+gsm.                    u:object_r:radio_prop:s0
+persist.radio           u:object_r:radio_prop:s0
+
+net.                    u:object_r:system_prop:s0
+dev.                    u:object_r:system_prop:s0
+runtime.                u:object_r:system_prop:s0
+hw.                     u:object_r:system_prop:s0
+sys.                    u:object_r:system_prop:s0
+sys.powerctl            u:object_r:powerctl_prop:s0
+service.                u:object_r:system_prop:s0
+wlan.                   u:object_r:system_prop:s0
+dhcp.                   u:object_r:dhcp_prop:s0
+dhcp.bt-pan.result      u:object_r:pan_result_prop:s0
+bluetooth.              u:object_r:bluetooth_prop:s0
+
+debug.                  u:object_r:debug_prop:s0
+debug.db.               u:object_r:debuggerd_prop:s0
+log.                    u:object_r:shell_prop:s0
+service.adb.root        u:object_r:shell_prop:s0
+service.adb.tcp.port    u:object_r:shell_prop:s0
+
+persist.audio.          u:object_r:audio_prop:s0
+persist.logd.           u:object_r:logd_prop:s0
+persist.sys.            u:object_r:system_prop:s0
+persist.service.        u:object_r:system_prop:s0
+persist.service.bdroid. u:object_r:bluetooth_prop:s0
+persist.security.       u:object_r:system_prop:s0
+
+# selinux non-persistent properties
+selinux.                u:object_r:security_prop:s0
+
+# default property context
+*                       u:object_r:default_prop:s0
+
+# data partition encryption properties
+vold.                   u:object_r:vold_prop:s0
+crypto.                 u:object_r:vold_prop:s0
+
+# ctl properties
+ctl.bootanim            u:object_r:ctl_bootanim_prop:s0
+ctl.dumpstate           u:object_r:ctl_dumpstate_prop:s0
+ctl.fuse_               u:object_r:ctl_fuse_prop:s0
+ctl.mdnsd               u:object_r:ctl_mdnsd_prop:s0
+ctl.ril-daemon          u:object_r:ctl_rildaemon_prop:s0
+ctl.bugreport           u:object_r:ctl_bugreport_prop:s0
+ctl.dhcpcd_bt-pan       u:object_r:ctl_dhcp_pan_prop:s0
+ctl.                    u:object_r:ctl_default_prop:s0
+
+# NFC properties
+nfc.                    u:object_r:nfc_prop:s0
+#line 1 "vendor/semc/system/sepolicy/Sensor/1.0.0/pad_controller/property_contexts"
+service.pad1.control.result   u:object_r:sys_pad_prop:s0
+service.pad2.control.result   u:object_r:sys_pad_prop:s0
+ril.pad.force_calib.start     u:object_r:radio_prop:s0
+ril.pad.force_calib.result    u:object_r:radio_prop:s0
+#line 1 "vendor/semc/system/sepolicy/Bootstrap_Applications/1.0.0/updatemiscta/property_contexts"
+semc.version.                u:object_r:semc_version_prop:s0
+persist.tareset.notfirstboot u:object_r:tareset_notfirstboot_prop:s0
+
+#line 1 "vendor/semc/system/sepolicy/Bootstrap_Applications/1.0.0/usbeng/property_contexts"
+persist.usb.eng                 u:object_r:usb_eng_prop:s0
+sys.usb.diag_mode               u:object_r:usb_diag_mode_prop:s0
+persist.sys.usb.config          u:object_r:usb_config_prop:s0
+persist.service.adb.enable      u:object_r:usb_adb_enable_prop:s0
+#line 1 "vendor/semc/system/sepolicy/Bootstrap_Applications/1.0.0/taimport/property_contexts"
+adb.secure        u:object_r:adb_secure_prop:s0
+sony.color_id     u:object_r:sony_colorid_prop:s0
+device.color.prof u:object_r:device_color_prof_prop:s0
+sony.serialno     u:object_r:sony_serialno_prop:s0
+#line 1 "vendor/semc/system/sepolicy/DRM_Agent_Widevine_L1/1.0.0/system_server/property_contexts"
+somc.hdcp. u:object_r:somc_hdcp_prop:s0
+#line 1 "vendor/semc/system/sepolicy/Fota/1.0.0/recovery/property_contexts"
+# protect sony.fota.* related property from other service
+sony.fota.                   u:object_r:sony_fota_prop:s0
+#line 1 "vendor/semc/system/sepolicy/Keys/1.0.0/kobjeventd/property_contexts"
+sys.charger_plugged    u:object_r:sys_charger_plugged_prop:s0
+sys.cover_state        u:object_r:sys_cover_state_prop:s0
+sys.wireless_charging  u:object_r:sys_wireless_charging_prop:s0
+#line 1 "vendor/semc/system/sepolicy/MHL_Demo_Mode/1.0.0/property_contexts"
+persist.demo.           u:object_r:system_prop:s0
+
+#line 1 "vendor/semc/system/sepolicy/Power_Save/1.0.0/property_contexts"
+sys.lcd_fpks u:object_r:xssm_lcd_fpks_prop:s0
+#line 1 "vendor/semc/system/sepolicy/System_Debug/1_0_0/property_contexts"
+sys.somc.thermal.state                 u:object_r:lota_prop:s0
+#line 1 "vendor/semc/system/sepolicy/Thermal_Mitigation/2.0.0//property_contexts"
+libcameralight.force_off u:object_r:thermal-engine_prop:s0
+persist.sys.thermal.shutdown u:object_r:thermal-engine_prop:s0
+sys.somc.traffic_control u:object_r:thermal-engine_prop:s0
+#line 1 "vendor/semc/system/sepolicy/Touch/1.0.0/property/property_contexts"
+sys.screen_on           u:object_r:sys_screenon_prop:s0
+#line 1 "vendor/semc/system/sepolicy/WLAN_Miracast_sink/1.1.0/property_contexts"
+sys.wfdsink. u:object_r:wfd_sink_prop:s0
+#line 1 "vendor/semc/system/sepolicy/WLAN_Miracast_source/1.0.1/property_contexts"
+hw.wfd. u:object_r:wfd_src_prop:s0
+hw.wfdON u:object_r:wfd_src_prop:s0
+#line 1 "vendor/semc/system/sepolicy/Video_Telephony/1.0.0//property_contexts"
+persist.ims.disableADBLogs u:object_r:persist_ims_disableADBLogs_prop:s0
+#line 1 "device/qcom/sepolicy/common/property_contexts"
+wc_transport.              u:object_r:bluetooth_prop:s0
+sys.usb_uicc.              u:object_r:uicc_prop:s0
+sys.ims.                   u:object_r:qcom_ims_prop:s0
+dolby.audio.               u:object_r:audio_prop:s0
+sys.usf.                   u:object_r:usf_prop:s0
+radio.atfwd.               u:object_r:radio_prop:s0
