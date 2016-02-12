@@ -23,5 +23,3 @@ done;
 
 $bb mount -o ro,remount /system
 
-chmod 777 /vender/bin/touch_fusion
-/vender/bin/touch_fusion

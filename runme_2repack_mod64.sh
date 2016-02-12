@@ -34,11 +34,6 @@ fi
 # Copy bootrec files
 cp -a tools/twrp-sony-recovery-boot-script/bootrec work/kernel.sin-ramdisk/bootrec
 
-# Copy touch binary
-if [ $devicename = 'SGP7' ]; then
-cp -a tools/vender work/kernel.sin-ramdisk/vender
-fi
-
 # Go to ramdisk dir
 cd work/kernel.sin-ramdisk
 
@@ -80,13 +75,6 @@ sed -i -e 's@on post-fs-data@on post-fs-data\n    exec /system/xbin/supolicy --l
 sed -i -e "s@service secd /system/bin/secd@service secd /system/bin/secd\n    setenv LD_PRELOAD /lib/lib-cred-inject.so@g" init.sony.rc
 sed -i -e "s@service keyprovd /system/bin/keyprovd@service keyprovd /system/bin/keyprovd\n    setenv LD_PRELOAD /lib/lib-cred-inject.so@g" init.sony-device-common.rc
 fi
-
-# Run touch_fusion
-if [ $devicename = 'SGP7' ]; then
-echo 'chmod 777 /vender/bin/touch_fusion' >> sbin/androplus.sh
-echo '/vender/bin/touch_fusion' >> sbin/androplus.sh
-fi
-
 
 # Fix qmux
 #sed -i -e "s/\/dev\/smdcntl7             0640   radio      radio/\/dev\/smdcntl7             0640   radio      radio\n\/dev\/smdcntl8             0640   radio      radio\n\/dev\/smdcntl9             0640   radio      radio\n\/dev\/smdcntl10            0640   radio      radio\n\/dev\/smdcntl11            0640   radio      radio/g" ueventd.qcom.rc
