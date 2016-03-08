@@ -89,6 +89,9 @@ sed -i -e "s/chmod 0770 \/dev\/block\/mmcblk0p1/chmod 0777 \/dev\/block\/mmcblk0
 sed -i -e "s/user tad/user root/g" init.sony-platform.rc
 sed -i -e "s/group tad root/group root root/g" init.sony-platform.rc
 
+# Disable dm-verity
+sed -i -e "s@wait,verify@wait@g" fstab.qcom
+
 # Permissive
 #xdelta patch ../../tools/init_permissive.xdelta init init.m
 #mv init.m init
