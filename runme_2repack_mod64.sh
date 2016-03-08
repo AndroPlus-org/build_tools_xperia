@@ -65,8 +65,11 @@ echo "\nservice androplus_script /sbin/androplus.sh\n    class main\n    user ro
 #sed -i -e "s/sdcard -u 1023 -g 1023 -w 1023 -d/sdcard -u 1023 -g 1023 -w 1023 -t 4 -d/g" init.qcom.rc
 #sed -i -e "s/on boot/on boot\n    # read ahead buffer\n    write \/sys\/block\/mmcblk0\/queue\/read_ahead_kb 2048\n    write \/sys\/block\/mmcblk1\/queue\/read_ahead_kb 2048/g" init.qcom.rc
 
+# Add support for /mnt/sdcard1 (thanks @monx®)
+sed -i -e "s@symlink /storage/sdcard1 /sdcard1@symlink /storage/sdcard1 /sdcard1\n    symlink /storage/sdcard1 /mnt/sdcard1@g" init.qcom.rc
+
 # Disable sony_ric
-sed -i -e "s/mount securityfs securityfs \/sys\/kernel\/security nosuid nodev noexec/# mount securityfs securityfs \/sys\/kernel\/security nosuid nodev noexec/g" init.sony-platform.rc
+sed -i -e "s@mount securityfs securityfs /sys/kernel/security nosuid nodev noexec@mount securityfs securityfs /sys/kernel/security nosuid nodev noexec\n    write /sys/kernel/security/sony_ric/enable 0@g" init.sony-platform.rc
 sed -i -e "s/service ric \/sbin\/ric/service ric \/sbin\/ric\n    disabled/g" init.sony-platform.rc
 
 # Restore DRM functions
