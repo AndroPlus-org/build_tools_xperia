@@ -37,6 +37,14 @@ cp -a tools/twrp-sony-recovery-boot-script/bootrec work/kernel.sin-ramdisk/bootr
 # Go to ramdisk dir
 cd work/kernel.sin-ramdisk
 
+# Disable wiping data in case you don't want to loose your data accidentally
+#mv sbin/mr sbin/mr_old
+#mv sbin/wipedata sbin/wipedata_old
+#sed -i -e "s@exec u:r:vold:s0 -- /sbin/mr@#exec u:r:vold:s0 -- /sbin/mr@g" init.sony-platform.rc
+#sed -i -e "s@exec u:r:vold:s0 -- /sbin/wipedata check-full-wipe@#exec u:r:vold:s0 -- /sbin/wipedata check-full-wipe@g" init.sony-platform.rc
+#sed -i -e "s@exec u:r:installd:s0 -- /sbin/wipedata check-keep-media-wipe@#exec u:r:installd:s0 -- /sbin/wipedata check-keep-media-wipe@g" init.sony-platform.rc
+#sed -i -e "s@exec u:r:vold:s0 -- /sbin/wipedata check-umount@#exec u:r:vold:s0 -- /sbin/wipedata check-umount@g" init.sony-platform.rc
+
 # Hijack init
 mv init init.real
 ln -s /bootrec/init.sh init
@@ -55,11 +63,11 @@ ln -s /bootrec/init.sh init
 
 # Enable insecure adb
 #sed -i -e "s/persist\.sys\.usb\.config=mtp/persist\.sys\.usb\.config=mtp,adb/g" default.prop
-sed -i -e "s/ro\.secure=1/ro\.secure=0/g" default.prop
-sed -i -e "s/ro\.debuggable=0/ro\.debuggable=1/g" default.prop
+#sed -i -e "s/ro\.secure=1/ro\.secure=0/g" default.prop
+#sed -i -e "s/ro\.debuggable=0/ro\.debuggable=1/g" default.prop
 
 # Run script
-echo "\nservice androplus_script /sbin/androplus.sh\n    class main\n    user root\n    group root\n    oneshot" >> init.rc
+echo "\non property:sys.boot_completed=1\n    start androplus_script\n\nservice androplus_script /sbin/androplus.sh\n    oneshot\n    class late_start\n    user root\n    group root\n    disabled" >> init.rc
 
 # Tweak
 #sed -i -e "s/sdcard -u 1023 -g 1023 -w 1023 -d/sdcard -u 1023 -g 1023 -w 1023 -t 4 -d/g" init.qcom.rc
@@ -88,6 +96,9 @@ sed -i -e "s/chown tad tad \/dev\/block\/mmcblk0p1/chown root root \/dev\/block\
 sed -i -e "s/chmod 0770 \/dev\/block\/mmcblk0p1/chmod 0777 \/dev\/block\/mmcblk0p1/g" init.sony-platform.rc
 sed -i -e "s/user tad/user root/g" init.sony-platform.rc
 sed -i -e "s/group tad root/group root root/g" init.sony-platform.rc
+
+# Re-enable ethernet adapter support
+sed -i -e "s@service scd /system/bin/scd@service dhcpcd_eth0 /system/bin/dhcpcd -B -d -t 30\n    class late_start\n    disabled\n    oneshot\n\nservice scd /system/bin/scd@g" init.sony-platform.rc
 
 # Disable dm-verity
 sed -i -e "s@wait,verify@wait@g" fstab.qcom
