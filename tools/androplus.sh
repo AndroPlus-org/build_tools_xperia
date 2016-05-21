@@ -1,8 +1,13 @@
-#!/sbin/busybox sh
+#!/system/bin/sh
 
-bb=/sbin/busybox;
+bb=/sbin/busybox
 
-$bb mount -o remount,rw /system
+if [ "$($BB mount | $BB grep rootfs | $BB cut -c 26-27 | $BB grep -c ro)" -eq "1" ]; then
+	$BB mount -o remount,rw /;
+fi;
+if [ "$($BB mount | $BB grep system | $BB grep -c ro)" -eq "1" ]; then
+	$BB mount -o remount,rw /system;
+fi;
 
 # Disable MP decision
 #mount -o remount,rw /system
@@ -21,5 +26,6 @@ for FILE in /system/etc/init.d/*; do
    sh $FILE >/dev/null
 done;
 
-$bb mount -o ro,remount /system
-
+if [ "$($BB mount | $BB grep system | $BB grep -c rw)" -eq "1" ]; then
+	$BB mount -o remount,ro /system;
+fi;

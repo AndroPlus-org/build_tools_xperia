@@ -103,6 +103,12 @@ sed -i -e "s@service scd /system/bin/scd@service dhcpcd_eth0 /system/bin/dhcpcd 
 # Disable dm-verity
 sed -i -e "s@wait,verify@wait@g" fstab.qcom
 
+# Workaround for MultiROM
+sed -i -e "s@write /sys/class/android_usb/android0/f_rndis/wceis 1@write /sys/class/android_usb/android0/f_rndis/wceis 1\n    chmod 750 /init.usbmode.sh@g" init.sony.usb.rc
+
+# Fix battery drain on MM
+#sed -i -e "/user=system seinfo=platform name=com.qualcomm.qti.tetherservice domain=qtitetherservice_app type=qtitetherservice_app_data_file/d" seapp_contexts
+
 # Permissive
 #xdelta patch ../../tools/init_permissive.xdelta init init.m
 #mv init.m init
