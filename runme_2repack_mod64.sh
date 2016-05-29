@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # Get device name
-crashtag=`cat work/kernel.sin-ramdisk/crashtag`
-devicename=`echo ${crashtag} | sed "s/.*-\([a-zA-Z0-9]*\).*/\1/"`
+deviceprop=`cat work/kernel.sin-ramdisk/default.prop`
+devicename=`echo ${deviceprop} | sed "s@.*ro\.bootimage\.build\.fingerprint=Sony\/\([a-zA-Z0-9_]*\).*@\1@"`
 
 # Copy genfstab.rhine
 #cp tools/genfstab.rhine work/kernel.sin-ramdisk/sbin/genfstab.rhine
@@ -17,7 +17,7 @@ cp tools/busybox work/kernel.sin-ramdisk/sbin/busybox
 chmod 777 work/kernel.sin-ramdisk/sbin/busybox
 
 # Copy lib-cred-inject.so
-if [ $devicename != 'SGP7' ]; then
+if ! expr $devicename : "karin.*" > /dev/null; then
 mkdir -p work/kernel.sin-ramdisk/lib
 cp tools/lib-cred-inject.so work/kernel.sin-ramdisk/lib/lib-cred-inject.so
 chmod 644 work/kernel.sin-ramdisk/lib/lib-cred-inject.so
@@ -81,7 +81,7 @@ sed -i -e "s@mount securityfs securityfs /sys/kernel/security nosuid nodev noexe
 sed -i -e "s/service ric \/sbin\/ric/service ric \/sbin\/ric\n    disabled/g" init.sony-platform.rc
 
 # Restore DRM functions
-if [ $devicename != 'SGP7' ]; then
+if ! expr $devicename : "karin.*" > /dev/null; then
 sed -i -e 's@on post-fs-data@on post-fs-data\n    exec /system/xbin/supolicy --live "allow secd rootfs file execute"@g' init.sony.rc
 sed -i -e "s@service secd /system/bin/secd@service secd /system/bin/secd\n    setenv LD_PRELOAD /lib/lib-cred-inject.so@g" init.sony.rc
 sed -i -e "s@service keyprovd /system/bin/keyprovd@service keyprovd /system/bin/keyprovd\n    setenv LD_PRELOAD /lib/lib-cred-inject.so@g" init.sony-device-common.rc
@@ -121,4 +121,4 @@ sed -i -e "s@write /sys/class/android_usb/android0/f_rndis/wceis 1@write /sys/cl
 #chmod 750 init
 
 # Compress ramdisk
-find ./* | sudo cpio -o -H newc | sudo gzip -9 > ../../ramdisk$devicename.cpio.gz
+find ./* | sudo cpio -o -H newc | sudo gzip -9 > ../../ramdisk_$devicename.cpio.gz
