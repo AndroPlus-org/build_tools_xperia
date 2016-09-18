@@ -17,7 +17,7 @@ cp tools/busybox work/kernel.sin-ramdisk/sbin/busybox
 chmod 777 work/kernel.sin-ramdisk/sbin/busybox
 
 # Copy files for DRM patch
-if ! expr $devicename : "karin.*" > /dev/null; then
+if ! expr $devicename : "karin.*" > /dev/null && ! expr $devicename : "suzuran.*" > /dev/null; then
 cp -a tools/init.vendor_ovl.sh work/kernel.sin-ramdisk/init.vendor_ovl.sh
 cp -a tools/vendor work/kernel.sin-ramdisk/vendor
 fi
@@ -84,7 +84,7 @@ sed -i -e "s@mount securityfs securityfs /sys/kernel/security nosuid nodev noexe
 sed -i -e "s/service ric \/sbin\/ric/service ric \/sbin\/ric\n    disabled/g" init.sony-platform.rc
 
 # Restore DRM functions
-if ! expr $devicename : "karin.*" > /dev/null; then
+if ! expr $devicename : "karin.*" > /dev/null && ! expr $devicename : "suzuran.*" > /dev/null; then
 echo "" >> init.rc
 echo "on vendor-ovl" >> init.rc
 echo "    mount /system" >> init.rc
