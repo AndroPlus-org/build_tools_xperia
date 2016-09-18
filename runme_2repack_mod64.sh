@@ -16,11 +16,10 @@ chmod 777 work/kernel.sin-ramdisk/sbin/androplus.sh
 cp tools/busybox work/kernel.sin-ramdisk/sbin/busybox
 chmod 777 work/kernel.sin-ramdisk/sbin/busybox
 
-# Copy lib-cred-inject.so
+# Copy files for DRM patch
 if ! expr $devicename : "karin.*" > /dev/null; then
-mkdir -p work/kernel.sin-ramdisk/lib
-cp tools/lib-cred-inject.so work/kernel.sin-ramdisk/lib/lib-cred-inject.so
-chmod 644 work/kernel.sin-ramdisk/lib/lib-cred-inject.so
+cp -a tools/init.vendor_ovl.sh work/kernel.sin-ramdisk/init.vendor_ovl.sh
+cp -a tools/vendor work/kernel.sin-ramdisk/vendor
 fi
 
 # Copy rootsh and SuperSU
@@ -32,7 +31,11 @@ fi
 #sudo chmod 6750 work/kernel.sin-ramdisk/sbin/rootsh
 
 # Copy bootrec files
+if ! expr $devicename : "dora.*" > /dev/null; then
 cp -a tools/twrp-sony-recovery-boot-script/bootrec work/kernel.sin-ramdisk/bootrec
+else
+cp -a tools/twrp-sony-recovery-boot-script-XP/bootrec work/kernel.sin-ramdisk/bootrec
+fi
 
 # Go to ramdisk dir
 cd work/kernel.sin-ramdisk
@@ -82,9 +85,15 @@ sed -i -e "s/service ric \/sbin\/ric/service ric \/sbin\/ric\n    disabled/g" in
 
 # Restore DRM functions
 if ! expr $devicename : "karin.*" > /dev/null; then
-sed -i -e 's@on post-fs-data@on post-fs-data\n    exec /system/xbin/supolicy --live "allow secd rootfs file execute"@g' init.sony.rc
-sed -i -e "s@service secd /system/bin/secd@service secd /system/bin/secd\n    setenv LD_PRELOAD /lib/lib-cred-inject.so@g" init.sony.rc
-sed -i -e "s@service keyprovd /system/bin/keyprovd@service keyprovd /system/bin/keyprovd\n    setenv LD_PRELOAD /lib/lib-cred-inject.so@g" init.sony-device-common.rc
+echo "" >> init.rc
+echo "on vendor-ovl" >> init.rc
+echo "    mount /system" >> init.rc
+echo "    exec u:r:init:s0 -- /system/bin/sh /init.vendor_ovl.sh /vendor" >> init.rc
+echo "    restorecon_recursive /vendor" >> init.rc
+sed -i -e "s!\(.*\)\(trigger post-fs\)\$!\1trigger vendor-ovl\n\1\2!" init.rc
+sed -i -e "s@service keyprovd /system/bin/keyprovd@service keyprovd /system/bin/keyprovd\n    setenv LD_PRELOAD /lib/lib-cred-inject.so:libdrmfix.so@g" init.sony-device-common.rc
+echo "/vendor(.*)		u:object_r:system_file:s0" >> file_contexts
+sed -i -e 's@export LD_PRELOAD libNimsWrap.so@export LD_PRELOAD libNimsWrap.so:libdrmfix.so@g' init.target.rc
 fi
 
 # Fix qmux
@@ -103,8 +112,17 @@ sed -i -e "s@service scd /system/bin/scd@service dhcpcd_eth0 /system/bin/dhcpcd 
 # Disable dm-verity
 sed -i -e "s@wait,verify@wait@g" fstab.qcom
 
+# Disable force encryption
+sed -i -e "s@forceencrypt@encryptable@g" fstab.qcom
+
+# Increase ZRAM
+#sed -i -e "s@zramsize=536870912@zramsize=1073741824@g" fstab.qcom
+
 # Workaround for MultiROM
 sed -i -e "s@write /sys/class/android_usb/android0/f_rndis/wceis 1@write /sys/class/android_usb/android0/f_rndis/wceis 1\n    chmod 750 /init.usbmode.sh@g" init.sony.usb.rc
+
+# Add loop device support
+sed -i -e "s@export ASEC_MOUNTPOINT /mnt/asec@export ASEC_MOUNTPOINT /mnt/asec\n    export LOOP_MOUNTPOINT /mnt/obb@g" init.environ.rc
 
 # Fix battery drain on MM
 #sed -i -e "/user=system seinfo=platform name=com.qualcomm.qti.tetherservice domain=qtitetherservice_app type=qtitetherservice_app_data_file/d" seapp_contexts
