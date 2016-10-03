@@ -31,7 +31,7 @@ fi
 #sudo chmod 6750 work/kernel.sin-ramdisk/sbin/rootsh
 
 # Copy bootrec files
-if ! expr $devicename : "dora.*" > /dev/null; then
+if ! expr $devicename : "dora.*" > /dev/null && ! expr $devicename : "kagura.*" > /dev/null && ! expr $devicename : "kugo.*" > /dev/null; then
 cp -a tools/twrp-sony-recovery-boot-script/bootrec work/kernel.sin-ramdisk/bootrec
 else
 cp -a tools/twrp-sony-recovery-boot-script-XP/bootrec work/kernel.sin-ramdisk/bootrec
