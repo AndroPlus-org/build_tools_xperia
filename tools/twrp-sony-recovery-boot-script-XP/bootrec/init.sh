@@ -15,11 +15,19 @@ set +x
 
 REAL_INIT="/init.real"
 
-DEV_FOTA_NODE="/dev/block/mmcblk0p45 b 259 13"
-DEV_FOTA="/dev/block/mmcblk0p45"
+DEVICE_CODENAME="PLEASECHANGETHIS"
+
+DEV_FOTA_NODE="/dev/block/mmcblk0p48 b 259 16"
+DEV_FOTA="/dev/block/mmcblk0p48"
+
+DEV_FOTA_NODE_DORA="/dev/block/mmcblk0p45 b 259 13"
+DEV_FOTA_DORA="/dev/block/mmcblk0p45"
 
 DEV_FOTA_NODE_KUGO="/dev/block/mmcblk0p46 b 259 14"
 DEV_FOTA_KUGO="/dev/block/mmcblk0p46"
+
+DEV_FOTA_NODE_KAGURA="/dev/block/mmcblk0p48 b 259 16"
+DEV_FOTA_KAGURA="/dev/block/mmcblk0p48"
 
 LOG_FILE="/bootrec/boot-log.txt"
 RECOVERY_CPIO="/bootrec/recovery.cpio"
@@ -35,6 +43,24 @@ LED_BLUE="/sys/class/leds/led:rgb_blue/brightness"
 LED_RED_KUGO="/sys/class/leds/as3668:red/brightness"
 LED_GREEN_KUGO="/sys/class/leds/as3668:green/brightness"
 LED_BLUE_KUGO="/sys/class/leds/as3668:blue/brightness"
+
+if [ ${DEVICE_CODENAME} = "dora" ]; then
+  DEV_FOTA_NODE=${DEV_FOTA_NODE_DORA}
+  DEV_FOTA=${DEV_FOTA_DORA}
+fi
+
+if [ ${DEVICE_CODENAME} = "kagura" ]; then
+  DEV_FOTA_NODE=${DEV_FOTA_NODE_KAGURA}
+  DEV_FOTA=${DEV_FOTA_KAGURA}
+fi
+
+if [ ${DEVICE_CODENAME} = "kugo" ]; then
+  LED_RED=${LED_RED_KUGO}
+  LED_GREEN=${LED_GREEN_KUGO}
+  LED_BLUE=${LED_BLUE_KUGO}
+  DEV_FOTA_NODE=${DEV_FOTA_NODE_KUGO}
+  DEV_FOTA=${DEV_FOTA_KUGO}
+fi
 
 ############
 #   CODE   #
@@ -74,14 +100,6 @@ busybox mknod -m 666 /dev/null c 1 3
 # Mount filesystems
 busybox mount -t proc proc /proc
 busybox mount -t sysfs sysfs /sys
-
-if [ -e ${LED_RED_KUGO} ]; then
-  LED_RED=${LED_RED_KUGO}
-  LED_GREEN=${LED_GREEN_KUGO}
-  LED_BLUE=${LED_BLUE_KUGO}
-  DEV_FOTA_NODE=${DEV_FOTA_NODE_KUGO}
-  DEV_FOTA=${DEV_FOTA_KUGO}
-fi
 
 # Methods for controlling LED
 led_blue() {

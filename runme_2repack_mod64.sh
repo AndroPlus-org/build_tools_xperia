@@ -3,6 +3,7 @@
 # Get device name
 deviceprop=`cat work/kernel.sin-ramdisk/default.prop`
 devicename=`echo ${deviceprop} | sed "s@.*ro\.bootimage\.build\.fingerprint=Sony\/\([a-zA-Z0-9_]*\).*@\1@"`
+devicename_s=`echo ${devicename} | sed "s@\([a-zA-Z0-9]*\).*@\1@"`
 
 # Copy genfstab.rhine
 #cp tools/genfstab.rhine work/kernel.sin-ramdisk/sbin/genfstab.rhine
@@ -31,10 +32,11 @@ fi
 #sudo chmod 6750 work/kernel.sin-ramdisk/sbin/rootsh
 
 # Copy bootrec files
-if ! expr $devicename : "dora.*" > /dev/null && ! expr $devicename : "kagura.*" > /dev/null && ! expr $devicename : "kugo.*" > /dev/null; then
+if expr $devicename : "sumire.*" > /dev/null && expr $devicename : "suzuran.*" > /dev/null && expr $devicename : "karin.*" > /dev/null; then
 cp -a tools/twrp-sony-recovery-boot-script/bootrec work/kernel.sin-ramdisk/bootrec
 else
 cp -a tools/twrp-sony-recovery-boot-script-XP/bootrec work/kernel.sin-ramdisk/bootrec
+sed -i -e "s@PLEASECHANGETHIS@$devicename_s@g" work/kernel.sin-ramdisk/bootrec/init.sh
 fi
 
 # Go to ramdisk dir
