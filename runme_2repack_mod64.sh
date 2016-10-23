@@ -32,7 +32,7 @@ fi
 #sudo chmod 6750 work/kernel.sin-ramdisk/sbin/rootsh
 
 # Copy bootrec files
-if expr $devicename : "sumire.*" > /dev/null && expr $devicename : "suzuran.*" > /dev/null && expr $devicename : "karin.*" > /dev/null; then
+if expr $devicename : "sumire.*" > /dev/null || expr $devicename : "suzuran.*" > /dev/null || expr $devicename : "karin.*" > /dev/null; then
 cp -a tools/twrp-sony-recovery-boot-script/bootrec work/kernel.sin-ramdisk/bootrec
 else
 cp -a tools/twrp-sony-recovery-boot-script-XP/bootrec work/kernel.sin-ramdisk/bootrec
