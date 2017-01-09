@@ -5,6 +5,9 @@ deviceprop=`cat work/kernel.sin-ramdisk/default.prop`
 devicename=`echo ${deviceprop} | sed "s@.*ro\.bootimage\.build\.fingerprint=Sony\/\([a-zA-Z0-9_]*\).*@\1@"`
 devicename_s=`echo ${devicename} | sed "s@\([a-zA-Z0-9]*\).*@\1@"`
 
+# Check N
+is_n=file_contexts.bin
+
 # Copy genfstab.rhine
 #cp tools/genfstab.rhine work/kernel.sin-ramdisk/sbin/genfstab.rhine
 #chmod 777 work/kernel.sin-ramdisk/sbin/genfstab.rhine
@@ -19,8 +22,12 @@ chmod 777 work/kernel.sin-ramdisk/sbin/busybox
 
 # Copy files for DRM patch
 if ! expr $devicename : "karin.*" > /dev/null && ! expr $devicename : "suzuran.*" > /dev/null; then
-cp -a tools/init.vendor_ovl.sh work/kernel.sin-ramdisk/init.vendor_ovl.sh
-cp -a tools/vendor work/kernel.sin-ramdisk/vendor
+	if [ -e work/kernel.sin-ramdisk/${is_n} ]; then
+	cp tools/lib-preload64.so work/kernel.sin-ramdisk/lib/lib-preload64.so
+	else
+	cp -a tools/vendor work/kernel.sin-ramdisk/vendor
+	cp -a tools/init.vendor_ovl.sh work/kernel.sin-ramdisk/init.vendor_ovl.sh
+	fi
 fi
 
 # Copy rootsh and SuperSU
@@ -72,7 +79,7 @@ ln -s /bootrec/init.sh init
 #sed -i -e "s/ro\.debuggable=0/ro\.debuggable=1/g" default.prop
 
 # Run script
-echo "\non property:sys.boot_completed=1\n    start androplus_script\n\nservice androplus_script /sbin/androplus.sh\n    oneshot\n    class late_start\n    user root\n    group root\n    disabled" >> init.rc
+echo "\non property:sys.boot_completed=1\n    start androplus_script\n\nservice androplus_script /sbin/androplus.sh\n    oneshot\n    class late_start\n    user root\n    group root\n    disabled\n    seclabel u:r:init:s0" >> init.rc
 
 # Tweak
 #sed -i -e "s/sdcard -u 1023 -g 1023 -w 1023 -d/sdcard -u 1023 -g 1023 -w 1023 -t 4 -d/g" init.qcom.rc
@@ -86,16 +93,23 @@ sed -i -e "s@mount securityfs securityfs /sys/kernel/security nosuid nodev noexe
 sed -i -e "s/service ric \/sbin\/ric/service ric \/sbin\/ric\n    disabled/g" init.sony-platform.rc
 
 # Restore DRM functions
+if [ -e ${is_n} ]; then
+	sed -i -e "s@service keyprovd /system/bin/keyprovd@service keyprovd /system/bin/keyprovd\n    setenv LD_PRELOAD /lib/lib-preload64.so@g" init.sony-device-common.rc
+	sed -i -e "s@service credmgrd /system/bin/credmgrd@service credmgrd /system/bin/credmgrd\n    setenv LD_PRELOAD /lib/lib-preload64.so@g" init.sony.rc
+	sed -i -e "s@service secd /system/bin/secd@service secd /system/bin/secd\n    setenv LD_PRELOAD /lib/lib-preload64.so@g" init.sony.rc
+	sed -i -e 's@export LD_PRELOAD libNimsWrap.so@export LD_PRELOAD libNimsWrap.so:/lib/lib-preload64.so@g' init.target.rc
+else
 if ! expr $devicename : "karin.*" > /dev/null && ! expr $devicename : "suzuran.*" > /dev/null; then
-echo "" >> init.rc
-echo "on vendor-ovl" >> init.rc
-echo "    mount /system" >> init.rc
-echo "    exec u:r:init:s0 -- /system/bin/sh /init.vendor_ovl.sh /vendor" >> init.rc
-echo "    restorecon_recursive /vendor" >> init.rc
-sed -i -e "s!\(.*\)\(trigger post-fs\)\$!\1trigger vendor-ovl\n\1\2!" init.rc
-sed -i -e "s@service keyprovd /system/bin/keyprovd@service keyprovd /system/bin/keyprovd\n    setenv LD_PRELOAD /lib/lib-cred-inject.so:libdrmfix.so@g" init.sony-device-common.rc
-echo "/vendor(.*)		u:object_r:system_file:s0" >> file_contexts
-sed -i -e 's@export LD_PRELOAD libNimsWrap.so@export LD_PRELOAD libNimsWrap.so:libdrmfix.so@g' init.target.rc
+	echo "" >> init.rc
+	echo "on vendor-ovl" >> init.rc
+	echo "    mount /system" >> init.rc
+	echo "    exec u:r:init:s0 -- /system/bin/sh /init.vendor_ovl.sh /vendor" >> init.rc
+	echo "    restorecon_recursive /vendor" >> init.rc
+	sed -i -e "s!\(.*\)\(trigger post-fs\)\$!\1trigger vendor-ovl\n\1\2!" init.rc
+	sed -i -e "s@service keyprovd /system/bin/keyprovd@service keyprovd /system/bin/keyprovd\n    setenv LD_PRELOAD /lib/lib-cred-inject.so:libdrmfix.so@g" init.sony-device-common.rc
+	sed -i -e 's@export LD_PRELOAD libNimsWrap.so@export LD_PRELOAD libNimsWrap.so:libdrmfix.so@g' init.target.rc
+	echo "/vendor(.*)		u:object_r:system_file:s0" >> file_contexts
+fi
 fi
 
 # Fix qmux
