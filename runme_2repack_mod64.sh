@@ -22,12 +22,9 @@ chmod 777 work/kernel.sin-ramdisk/sbin/busybox
 
 # Copy files for DRM patch
 if ! expr $devicename : "karin.*" > /dev/null && ! expr $devicename : "suzuran.*" > /dev/null; then
-	if [ -e work/kernel.sin-ramdisk/${is_n} ]; then
-	cp tools/lib-preload64.so work/kernel.sin-ramdisk/lib/lib-preload64.so
-	else
+	rm -f work/kernel.sin-ramdisk/vendor
 	cp -a tools/vendor work/kernel.sin-ramdisk/vendor
 	cp -a tools/init.vendor_ovl.sh work/kernel.sin-ramdisk/init.vendor_ovl.sh
-	fi
 fi
 
 # Copy rootsh and SuperSU
@@ -94,10 +91,18 @@ sed -i -e "s/service ric \/sbin\/ric/service ric \/sbin\/ric\n    disabled/g" in
 
 # Restore DRM functions
 if [ -e ${is_n} ]; then
-	sed -i -e "s@service keyprovd /system/bin/keyprovd@service keyprovd /system/bin/keyprovd\n    setenv LD_PRELOAD /lib/lib-preload64.so@g" init.sony-device-common.rc
-	sed -i -e "s@service credmgrd /system/bin/credmgrd@service credmgrd /system/bin/credmgrd\n    setenv LD_PRELOAD /lib/lib-preload64.so@g" init.sony.rc
-	sed -i -e "s@service secd /system/bin/secd@service secd /system/bin/secd\n    setenv LD_PRELOAD /lib/lib-preload64.so@g" init.sony.rc
-	sed -i -e 's@export LD_PRELOAD libNimsWrap.so@export LD_PRELOAD libNimsWrap.so:/lib/lib-preload64.so@g' init.target.rc
+	echo "" >> init.environ.rc
+	echo "export LD_PRELOAD libdrmfix.so" >> init.environ.rc
+	sed -i -e "s@on early-init@on early-init\n    restorecon /vendor/lib64/libdrmfix.so\n    restorecon /vendor/lib/libdrmfix.so@g" init.rc
+	sed -i -e "s@trigger fs@trigger fs\n    trigger vendor-ovl@g" init.rc
+	echo "on vendor-ovl" >> init.rc
+	echo "    mount securityfs securityfs /sys/kernel/security nosuid nodev noexec" >> init.rc
+	echo "    chmod 0640 /sys/kernel/security/sony_ric/enable" >> init.rc
+	echo "    write /sys/kernel/security/sony_ric/enable 0" >> init.rc
+	echo "    mount none /system/vendor/lib /vendor/lib/bind_lib bind" >> init.rc
+	echo "    mount none /system/vendor/lib64 /vendor/lib64/bind_lib64 bind" >> init.rc
+	echo "    exec u:r:init:s0 -- /system/bin/sh /init.vendor_ovl.sh /vendor" >> init.rc
+	echo "    restorecon_recursive /vendor" >> init.rc
 else
 if ! expr $devicename : "karin.*" > /dev/null && ! expr $devicename : "suzuran.*" > /dev/null; then
 	echo "" >> init.rc
