@@ -21,10 +21,10 @@ cp tools/busybox work/kernel.sin-ramdisk/sbin/busybox
 chmod 777 work/kernel.sin-ramdisk/sbin/busybox
 
 # Copy files for DRM patch
-if ! expr $devicename : "karin.*" > /dev/null && ! expr $devicename : "suzuran.*" > /dev/null; then
-	rm -f work/kernel.sin-ramdisk/vendor
-	cp -a tools/vendor work/kernel.sin-ramdisk/vendor
-	cp -a tools/init.vendor_ovl.sh work/kernel.sin-ramdisk/init.vendor_ovl.sh
+if ! expr $devicename : "karin.*" > /dev/null; then
+rm -f work/kernel.sin-ramdisk/vendor
+cp -a tools/vendor work/kernel.sin-ramdisk/vendor
+cp -a tools/init.vendor_ovl.sh work/kernel.sin-ramdisk/init.vendor_ovl.sh
 fi
 
 # Copy rootsh and SuperSU
@@ -36,11 +36,13 @@ fi
 #sudo chmod 6750 work/kernel.sin-ramdisk/sbin/rootsh
 
 # Copy bootrec files
+if [ -e !${is_n} ]; then
 if expr $devicename : "sumire.*" > /dev/null || expr $devicename : "suzuran.*" > /dev/null || expr $devicename : "karin.*" > /dev/null; then
 cp -a tools/twrp-sony-recovery-boot-script/bootrec work/kernel.sin-ramdisk/bootrec
 else
 cp -a tools/twrp-sony-recovery-boot-script-XP/bootrec work/kernel.sin-ramdisk/bootrec
 sed -i -e "s@PLEASECHANGETHIS@$devicename_s@g" work/kernel.sin-ramdisk/bootrec/init.sh
+fi
 fi
 
 # Go to ramdisk dir
@@ -55,8 +57,10 @@ cd work/kernel.sin-ramdisk
 #sed -i -e "s@exec u:r:vold:s0 -- /sbin/wipedata check-umount@#exec u:r:vold:s0 -- /sbin/wipedata check-umount@g" init.sony-platform.rc
 
 # Hijack init
+if [ -e !${is_n} ]; then
 mv init init.real
 ln -s /bootrec/init.sh init
+fi
 
 # Changes for generating proper fstab
 #rm -f fstab.qcom
@@ -90,6 +94,7 @@ sed -i -e "s@mount securityfs securityfs /sys/kernel/security nosuid nodev noexe
 sed -i -e "s/service ric \/sbin\/ric/service ric \/sbin\/ric\n    disabled/g" init.sony-platform.rc
 
 # Restore DRM functions
+if ! expr $devicename : "karin.*" > /dev/null; then
 if [ -e ${is_n} ]; then
 	echo "" >> init.environ.rc
 	echo "export LD_PRELOAD libdrmfix.so" >> init.environ.rc
@@ -104,7 +109,6 @@ if [ -e ${is_n} ]; then
 	echo "    exec u:r:init:s0 -- /system/bin/sh /init.vendor_ovl.sh /vendor" >> init.rc
 	echo "    restorecon_recursive /vendor" >> init.rc
 else
-if ! expr $devicename : "karin.*" > /dev/null && ! expr $devicename : "suzuran.*" > /dev/null; then
 	echo "" >> init.rc
 	echo "on vendor-ovl" >> init.rc
 	echo "    mount /system" >> init.rc
@@ -136,6 +140,10 @@ sed -i -e "s@wait,verify@wait@g" fstab.qcom
 # Disable force encryption
 sed -i -e "s@forceencrypt@encryptable@g" fstab.qcom
 
+# Add support for F2FS
+sed -i -e "s@/dev/block/bootdevice/by-name/userdata@/dev/block/bootdevice/by-name/userdata  /data             f2fs    nosuid,nodev,noatime,inline_xattr,data_flush wait,check,encryptable=footer,resize\n/dev/block/bootdevice/by-name/userdata@g" fstab.qcom
+sed -i -e "s@/dev/block/bootdevice/by-name/cache@/dev/block/bootdevice/by-name/cache     /cache            f2fs    nosuid,nodev,noatime,inline_xattr,flush_merge,data_flush                      wait,check\n/dev/block/bootdevice/by-name/cache@g" fstab.qcom
+
 # Increase ZRAM
 #sed -i -e "s@zramsize=536870912@zramsize=1073741824@g" fstab.qcom
 
@@ -144,9 +152,6 @@ sed -i -e "s@write /sys/class/android_usb/android0/f_rndis/wceis 1@write /sys/cl
 
 # Add loop device support
 sed -i -e "s@export ASEC_MOUNTPOINT /mnt/asec@export ASEC_MOUNTPOINT /mnt/asec\n    export LOOP_MOUNTPOINT /mnt/obb@g" init.environ.rc
-
-# Fix battery drain on MM
-#sed -i -e "/user=system seinfo=platform name=com.qualcomm.qti.tetherservice domain=qtitetherservice_app type=qtitetherservice_app_data_file/d" seapp_contexts
 
 # Permissive
 #xdelta patch ../../tools/init_permissive.xdelta init init.m
