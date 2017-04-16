@@ -36,12 +36,13 @@ fi
 #sudo chmod 6750 work/kernel.sin-ramdisk/sbin/rootsh
 
 # Copy bootrec files
-if [ -e !${is_n} ]; then
+if [ ! -e ${is_n} ]; then
 if expr $devicename : "sumire.*" > /dev/null || expr $devicename : "suzuran.*" > /dev/null || expr $devicename : "karin.*" > /dev/null; then
 cp -a tools/twrp-sony-recovery-boot-script/bootrec work/kernel.sin-ramdisk/bootrec
 else
-cp -a tools/twrp-sony-recovery-boot-script-XP/bootrec work/kernel.sin-ramdisk/bootrec
-sed -i -e "s@PLEASECHANGETHIS@$devicename_s@g" work/kernel.sin-ramdisk/bootrec/init.sh
+#cp -a tools/twrp-sony-recovery-boot-script-XP/bootrec work/kernel.sin-ramdisk/bootrec
+#sed -i -e "s@PLEASECHANGETHIS@$devicename_s@g" work/kernel.sin-ramdisk/bootrec/init.sh
+cp -a tools/init.hijack work/kernel.sin-ramdisk/init.hijack
 fi
 fi
 
@@ -57,9 +58,12 @@ cd work/kernel.sin-ramdisk
 #sed -i -e "s@exec u:r:vold:s0 -- /sbin/wipedata check-umount@#exec u:r:vold:s0 -- /sbin/wipedata check-umount@g" init.sony-platform.rc
 
 # Hijack init
-if [ -e !${is_n} ]; then
+if [ ! -e ${is_n} ]; then
 mv init init.real
 ln -s /bootrec/init.sh init
+else
+mv init init.bin
+mv init.hijack init
 fi
 
 # Changes for generating proper fstab
