@@ -22,9 +22,10 @@ chmod 777 work/kernel.sin-ramdisk/sbin/busybox
 
 # Copy files for DRM patch
 if ! expr $devicename : "karin.*" > /dev/null; then
-rm -f work/kernel.sin-ramdisk/vendor
-cp -a tools/vendor work/kernel.sin-ramdisk/vendor
-cp -a tools/init.vendor_ovl.sh work/kernel.sin-ramdisk/init.vendor_ovl.sh
+#rm -f work/kernel.sin-ramdisk/vendor
+#cp -a tools/vendor work/kernel.sin-ramdisk/vendor
+#cp -a tools/init.vendor_ovl.sh work/kernel.sin-ramdisk/init.vendor_ovl.sh
+cp tools/lib-preload64.so work/kernel.sin-ramdisk/lib/lib-preload64.so
 fi
 
 # Copy rootsh and SuperSU
@@ -35,16 +36,30 @@ fi
 #sudo chgrp 2000 work/kernel.sin-ramdisk/sbin/rootsh
 #sudo chmod 6750 work/kernel.sin-ramdisk/sbin/rootsh
 
+<< "#__CO__"
 # Copy bootrec files
-if [ ! -e ${is_n} ]; then
 if expr $devicename : "sumire.*" > /dev/null || expr $devicename : "suzuran.*" > /dev/null || expr $devicename : "karin.*" > /dev/null; then
-cp -a tools/twrp-sony-recovery-boot-script/bootrec work/kernel.sin-ramdisk/bootrec
+	cp -a tools/twrp-sony-recovery-boot-script/bootrec work/kernel.sin-ramdisk/bootrec
 else
-#cp -a tools/twrp-sony-recovery-boot-script-XP/bootrec work/kernel.sin-ramdisk/bootrec
-#sed -i -e "s@PLEASECHANGETHIS@$devicename_s@g" work/kernel.sin-ramdisk/bootrec/init.sh
-cp -a tools/init.hijack work/kernel.sin-ramdisk/init.hijack
+	cp -a tools/twrp-sony-recovery-boot-script-XP/bootrec work/kernel.sin-ramdisk/bootrec
+	sed -i -e "s@PLEASECHANGETHIS@$devicename_s@g" work/kernel.sin-ramdisk/bootrec/init.sh
 fi
+#__CO__
+<< "#__CO__"
+if [ ! -e work/kernel.sin-ramdisk/${is_n} ]; then
+	if expr $devicename : "sumire.*" > /dev/null || expr $devicename : "suzuran.*" > /dev/null || expr $devicename : "karin.*" > /dev/null; then
+		cp -a tools/twrp-sony-recovery-boot-script/bootrec work/kernel.sin-ramdisk/bootrec
+	else
+		cp -a tools/twrp-sony-recovery-boot-script-XP/bootrec work/kernel.sin-ramdisk/bootrec
+		sed -i -e "s@PLEASECHANGETHIS@$devicename_s@g" work/kernel.sin-ramdisk/bootrec/init.sh
+	fi
+else
+	cp -a tools/vendor/bin/bootimg work/kernel.sin-ramdisk/sbin/bootimg
+	cp -a tools/vendor/bin/busybox work/kernel.sin-ramdisk/sbin/busybox
+	cp -a tools/vendor/bin/extract_elf_ramdisk work/kernel.sin-ramdisk/sbin/extract_elf_ramdisk
+	cp -a tools/init.hijack work/kernel.sin-ramdisk/init.hijack
 fi
+#__CO__
 
 # Go to ramdisk dir
 cd work/kernel.sin-ramdisk
@@ -57,6 +72,7 @@ cd work/kernel.sin-ramdisk
 #sed -i -e "s@exec u:r:installd:s0 -- /sbin/wipedata check-keep-media-wipe@#exec u:r:installd:s0 -- /sbin/wipedata check-keep-media-wipe@g" init.sony-platform.rc
 #sed -i -e "s@exec u:r:vold:s0 -- /sbin/wipedata check-umount@#exec u:r:vold:s0 -- /sbin/wipedata check-umount@g" init.sony-platform.rc
 
+<< "#__CO__"
 # Hijack init
 if [ ! -e ${is_n} ]; then
 mv init init.real
@@ -64,7 +80,18 @@ ln -s /bootrec/init.sh init
 else
 mv init init.bin
 mv init.hijack init
+if expr $devicename : "dora.*" > /dev/null; then
+sed -i -e "s@mmcblk0p32@mmcblk0p45@g" init
 fi
+if expr $devicename : "kugo.*" > /dev/null; then
+sed -i -e "s@mmcblk0p32@$mmcblk0p46@g" init
+sed -i -e "s@leds/led:rgb_@leds/as3668:@g" init
+fi
+if expr $devicename : "kagura.*" > /dev/null; then
+sed -i -e "s@mmcblk0p32@mmcblk0p48@g" init
+fi
+fi
+#__CO__
 
 # Changes for generating proper fstab
 #rm -f fstab.qcom
@@ -100,6 +127,7 @@ sed -i -e "s/service ric \/sbin\/ric/service ric \/sbin\/ric\n    disabled/g" in
 # Restore DRM functions
 if ! expr $devicename : "karin.*" > /dev/null; then
 if [ -e ${is_n} ]; then
+<< "#__CO__"
 	echo "" >> init.environ.rc
 	echo "export LD_PRELOAD libdrmfix.so" >> init.environ.rc
 	sed -i -e "s@on early-init@on early-init\n    restorecon /vendor/lib64/libdrmfix.so\n    restorecon /vendor/lib/libdrmfix.so@g" init.rc
@@ -112,6 +140,11 @@ if [ -e ${is_n} ]; then
 	echo "    mount none /system/vendor/lib64 /vendor/lib64/bind_lib64 bind" >> init.rc
 	echo "    exec u:r:init:s0 -- /system/bin/sh /init.vendor_ovl.sh /vendor" >> init.rc
 	echo "    restorecon_recursive /vendor" >> init.rc
+#__CO__
+	sed -i -e "s@service keyprovd /system/bin/keyprovd@service keyprovd /system/bin/keyprovd\n    setenv LD_PRELOAD /lib/lib-preload64.so@g" init.sony-device-common.rc
+	sed -i -e "s@service credmgrd /system/bin/credmgrd@service credmgrd /system/bin/credmgrd\n    setenv LD_PRELOAD /lib/lib-preload64.so@g" init.sony.rc
+	sed -i -e "s@service secd /system/bin/secd@service secd /system/bin/secd\n    setenv LD_PRELOAD /lib/lib-preload64.so@g" init.sony.rc
+	sed -i -e 's@export LD_PRELOAD libNimsWrap.so@export LD_PRELOAD libNimsWrap.so:/lib/lib-preload64.so@g' init.target.rc
 else
 	echo "" >> init.rc
 	echo "on vendor-ovl" >> init.rc
