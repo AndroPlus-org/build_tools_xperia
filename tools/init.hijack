@@ -1,13 +1,14 @@
-#!/vendor/bin/busybox ash
+#!/sbin/busybox ash
 
 # Disable printing/echo of commands
 set +x
 
 INIT="/init.bin"
-BB=/vendor/bin/busybox
-BOOTIMG=/vendor/bin/bootimg
+BB=/sbin/busybox
+BOOTIMG=/sbin/bootimg
+EXTRACTELF=/sbin/extract_elf_ramdisk
 PROPERTIES=/default.prop
-TWRP=/vendor/twrp.xz
+RECOVERY_CPIO="/recovery/recovery.cpio"
 
 NODE_FOTA=259
 NAME_FOTA="mmcblk0p32"
@@ -40,60 +41,26 @@ vibrate() {
 	echo 150 > ${VIBRATE}
 }
 
-start_internal_recovery() {
-	set_led_color 255 100 0
-	${BB} sed -i ${PROPERTIES} \
-			-e "s!\(ro.debuggable=\)0!\11!" \
-			-e "s!\(ro.secure=\)1!\10!" \
-			-e "s!\(ro.allow.mock.location=\)0!\11!" \
-			-e "s!\(ro.adb.secure=\)1!\10!" \
-			-e "s!\(ro.build.type=\)user!\1userdebug!"
-	${BB} grep -q ro.build.type ${PROPERTIES}
-	[ $? -ne 0 ] && echo >>${PROPERTIES} ro.build.type=userdebug
-	${BB} grep -q ro.adb.secure ${PROPERTIES}
-	[ $? -ne 0 ] && echo >>${PROPERTIES} ro.adb.secure=0
-	
-	${BB} rm -f /init*.rc /init*.sh
-	${BB} unxz -c ${TWRP} | ${BB} cpio -im
-
-	for lnk in start stop getprop setprop load_policy; do
-		${BB} ln -s toolbox /sbin/${lnk}
-	done
-	${BB} ln -s toybox /sbin/restorecon
-
-	${BOOTIMG} seinject -Z recovery -P /sepolicy -o /sepolicy
-	${BOOTIMG} seinject -Z init -P /sepolicy -o /sepolicy
-	${BOOTIMG} seinject -Z init_shell -P /sepolicy -o /sepolicy
-	${BOOTIMG} seinject -Z kernel -P /sepolicy -o /sepolicy
-
-	${BB} umount /proc
-	${BB} umount /sys
-	${BB} rm -rf /dev/* ${TWRP}
-	exec /init $@
-}
-
 start_fota_recovery() {
 	set_led_color 255 100 0
+	
 	${BB} mkdir -m 755 -p /dev/block
-	${BB} mknod -m 600 ${DEV_FOTA} b ${NODE_FOTA} 0
+	${BB} mknod -m 600 ${DEV_FOTA} b ${NODE_FOTA} 16
 	
 	${BB} mkdir -m 755 -p /recovery
-	${BOOTIMG} unpackelf -q -r /recovery/rd.gz -i ${DEV_FOTA}
-	if [ $? -eq 0 ]; then
-		echo "Found ELF recovery image" >> ${LOG_FILE}
-	else
-		${BOOTIMG} unpackimg -r /recovery/rd.gz -i ${DEV_FOTA}
-		if [ $? -eq 0 ]; then
-			echo "Found android recovery image" >> ${LOG_FILE}
-		fi
-	fi	
+	${BB} mount -o remount,rw /
+	${BB} ln -sf /sbin/busybox /recovery/sh
 
+	${EXTRACTELF} -i ${DEV_FOTA} -o ${RECOVERY_CPIO} -t /
+	${BB} rm -f /recovery/sh
 	${BB} rm -f /init*.rc /init*.sh
-	${BB} gunzip -c /recovery/rd.gz | ${BB} cpio -im
+	${BB} cpio -i -u < ${RECOVERY_CPIO}
+	set_led_color 0 255 0
 
 	${BB} umount /proc
 	${BB} umount /sys
-	${BB} rm -rf /dev/* /recovery ${BOOTIMG} ${TWRP}
+	
+	${BB} rm -rf /dev/* /recovery ${BOOTIMG} ${EXTRACTELF}
 	exec /init $@
 }
 
@@ -115,7 +82,7 @@ ${BB} mv ${INIT} /init
 ${BB} mount -t proc proc /proc
 ${BB} mount -t sysfs sysfs /sys
 
- Check for cmdline
+# Check for cmdline
 if ${BB} grep -q warmboot=${WARMBOOT_RECOVERY} /proc/cmdline; then
 	echo "Recovery request from cmdline" >> ${LOG_FILE}
 	start_internal_recovery	
@@ -135,10 +102,9 @@ set_led_color 255 255 0
 ${BB} timeout -t ${KEY_EVENT_DELAY} ${BOOTIMG} keycheck
 KEY=$?
 
-# Volume up or reboot recovery: Use internal recovery
+# Volume up or reboot recovery: Use recovery from fotakernel partition
 if [ $KEY -eq 115 ]; then
-	echo "Entering internal TWRP Recovery Mode" >> ${LOG_FILE}
-	#start_internal_recovery
+	echo "Entering Recovery Mode" >> ${LOG_FILE}
 	start_fota_recovery
 fi	
 
@@ -153,5 +119,5 @@ set_led_color 0 0 0
 
 ${BB} umount /proc
 ${BB} umount /sys
-${BB} rm -rf /dev/* ${BOOTIMG} ${TWRP}
+${BB} rm -rf /dev/* ${BOOTIMG} ${EXTRACTELF}
 exec /init $@
