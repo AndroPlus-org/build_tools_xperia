@@ -172,6 +172,7 @@ sed -i -e "s/group tad root/group root root/g" init.sony-platform.rc
 sed -i -e "s@service scd /system/bin/scd@service dhcpcd_eth0 /system/bin/dhcpcd -B -d -t 30\n    class late_start\n    disabled\n    oneshot\n\nservice scd /system/bin/scd@g" init.sony-platform.rc
 
 # Disable dm-verity
+sed -i -e "s@wait,verify=.*fsmetadata@wait@g" fstab.qcom
 sed -i -e "s@wait,verify@wait@g" fstab.qcom
 
 # Disable force encryption
