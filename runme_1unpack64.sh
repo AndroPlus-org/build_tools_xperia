@@ -33,7 +33,7 @@ fi
 
 cd work
 
-if [ -e kernel.elf ]; then
+if [ -e kernel.sin ]; then
 	chmod 777 unpack-kernelsin64.pl
 	./unpack-kernelsin64.pl kernel.sin
 elif [ -e kernel.bin ]; then
