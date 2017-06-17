@@ -191,6 +191,11 @@ sed -i -e "s@write /sys/class/android_usb/android0/f_rndis/wceis 1@write /sys/cl
 # Add loop device support
 sed -i -e "s@export ASEC_MOUNTPOINT /mnt/asec@export ASEC_MOUNTPOINT /mnt/asec\n    export LOOP_MOUNTPOINT /mnt/obb@g" init.environ.rc
 
+# Re-enable tap to wake support
+if expr $devicename : "maple.*" > /dev/null; then
+sed -i -e "s@# Touch@# Touch\non property:persist.sys.touch.easywakeup=0\n    write /sys/devices/virtual/input/clearpad/wakeup_gesture 0\n\non property:persist.sys.touch.easywakeup=1\n    write /sys/devices/virtual/input/clearpad/wakeup_gesture 1\n@g" init.sony-device-common.rc
+fi
+
 # Permissive
 #xdelta patch ../../tools/init_permissive.xdelta init init.m
 #mv init.m init
