@@ -29,6 +29,9 @@ DEV_FOTA_KUGO="/dev/block/mmcblk0p46"
 DEV_FOTA_NODE_KAGURA="/dev/block/mmcblk0p48 b 259 16"
 DEV_FOTA_KAGURA="/dev/block/mmcblk0p48"
 
+DEV_FOTA_NODE_MAPLE="/dev/block/sde45 b 259 29"
+DEV_FOTA_MAPLE="/dev/block/sde45"
+
 LOG_FILE="/bootrec/boot-log.txt"
 RECOVERY_CPIO="/bootrec/recovery.cpio"
 
@@ -61,6 +64,18 @@ if [ ${DEVICE_CODENAME} = "kugo" ]; then
   DEV_FOTA_NODE=${DEV_FOTA_NODE_KUGO}
   DEV_FOTA=${DEV_FOTA_KUGO}
 fi
+
+if [ ${DEVICE_CODENAME} = "maple" ]; then
+  DEV_FOTA_NODE=${DEV_FOTA_NODE_MAPLE}
+  DEV_FOTA=${DEV_FOTA_MAPLE}
+fi
+
+_PATH="$PATH"
+export PATH=/bootrec:/sbin
+busybox rm -f /init
+busybox mv ${REAL_INIT} /init
+export PATH="${_PATH}"
+exec /init $@
 
 ############
 #   CODE   #
