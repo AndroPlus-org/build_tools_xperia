@@ -19,6 +19,10 @@ if [ ! -e kernel.bin ]; then
     if [ -e kernel*.bin ]; then
         mv kernel*.bin kernel.bin
     fi
+    
+    if [ -e kernel*.img ]; then
+        mv kernel*.img kernel.bin
+    fi
 fi
 
 mkdir work

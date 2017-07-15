@@ -1,5 +1,7 @@
 #!/bin/sh
 
+if [ -d work/kernel.sin-ramdisk ]; then
+
 # Get device name
 deviceprop=`cat work/kernel.sin-ramdisk/default.prop`
 devicename=`echo ${deviceprop} | sed "s@.*ro\.bootimage\.build\.fingerprint=Sony\/\([a-zA-Z0-9_]*\).*@\1@"`
@@ -182,3 +184,5 @@ fi
 
 # Compress ramdisk
 find ./* | sudo cpio -o -H newc | sudo gzip -9 > ../../ramdisk_$devicename.cpio.gz
+
+fi
