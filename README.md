@@ -11,7 +11,7 @@ Xperia Z3 (shinano) and previous platform
 3. Run runme_2repack_mod.sh to pack  
 
 Xperia Z3+/Z4 (kitakami) or later  
-1. Extract kernel.sin by using Flashtool (Tools -> Sin Editor -> Extract Data), then copy kernel.elf to this dir  
+1. Extract kernel.sin by using Flashtool (Tools -> Sin Editor -> Extract Data) or UnSIN, then copy kernel.elf to this dir  
 2. Run runme_1unpack64.sh (Edit contents of work/kernel.sin-ramdisk dir if you want)  
 3. Run runme_2repack_mod64.sh to pack  
 ***
@@ -25,7 +25,7 @@ Xperia Z3シリーズ (shinano) までの場合
 3. runme_2repack_mod.shを実行  
 
 Xperia Z3+/Z4シリーズ (kitakami) 以降の場合  
-1. Flashtool (Tools -> Sin Editor -> Extract Data) などでkernel.sinをextractし、kernel.elfをこのディレクトリにコピー  
+1. Flashtool (Tools -> Sin Editor -> Extract Data)、UnSINなどでkernel.sinをextractし、kernel.elfをこのディレクトリにコピー  
 2. runme_1unpack64.shを実行 (ramdiskの中身を編集したければwork/kernel.sin-ramdiskディレクトリで編集する)  
 3. runme_2repack_mod64.shを実行  
 
