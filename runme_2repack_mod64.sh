@@ -182,6 +182,11 @@ if expr $devicename : "maple.*" > /dev/null; then
 sed -i -e "s@# Touch@# Touch\non property:persist.sys.touch.easywakeup=0\n    write /sys/devices/virtual/input/clearpad/wakeup_gesture 0\n\non property:persist.sys.touch.easywakeup=1\n    write /sys/devices/virtual/input/clearpad/wakeup_gesture 1\n@g" init.sony-device-common.rc
 fi
 
+# Add sToRm// DRM fix support
+if expr $devicename : "maple.*" > /dev/null; then
+sed -i -e "s@export ASEC_MOUNTPOINT /mnt/asec@export ASEC_MOUNTPOINT /mnt/asec\n    export LD_PRELOAD drmfix.so:drmfuck.so@g" init.environ.rc
+fi
+
 # Compress ramdisk
 find ./* | sudo cpio -o -H newc | sudo gzip -9 > ../../ramdisk_$devicename.cpio.gz
 
